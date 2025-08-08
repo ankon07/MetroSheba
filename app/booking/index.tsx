@@ -104,7 +104,7 @@ export default function BookingScreen() {
                   style={styles.input}
                   value={passengerInfo.firstName}
                   onChangeText={(text) => handleInputChange("firstName", text)}
-                  placeholder="Alex"
+                  placeholder="Ankon"
                 />
               </View>
             </View>
@@ -130,7 +130,7 @@ export default function BookingScreen() {
                 style={styles.input}
                 value={passengerInfo.email}
                 onChangeText={(text) => handleInputChange("email", text)}
-                placeholder="alex.johnson@example.com"
+                placeholder="ankon@iut-dhaka.edu"
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -146,7 +146,7 @@ export default function BookingScreen() {
                 style={styles.input}
                 value={passengerInfo.phone}
                 onChangeText={(text) => handleInputChange("phone", text)}
-                placeholder="+44 123 456 7890"
+                placeholder="+8801234567890"
                 keyboardType="phone-pad"
               />
             </View>
