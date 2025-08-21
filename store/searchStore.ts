@@ -17,7 +17,7 @@ interface SearchState {
   }[];
   setSearchParams: (params: Partial<SearchParams>) => void;
   resetSearchParams: () => void;
-  searchTrips: () => void;
+  searchTrips: () => Promise<void>;
   addRecentSearch: () => void;
   clearRecentSearches: () => void;
 }
@@ -49,19 +49,41 @@ export const useSearchStore = create<SearchState>()(
         set({ searchParams: initialSearchParams });
       },
       
-      searchTrips: () => {
+      searchTrips: async () => {
         const { from, to } = get().searchParams;
         if (!from || !to) return;
         
-        // In a real app, this would be an API call
-        // For now, we'll filter the mock data
-        const results = mockTrips.filter(
-          (trip) => 
-            trip.from.city === from.city && 
-            trip.to.city === to.city
-        );
-        
-        set({ searchResults: results });
+        // Fetch from Firebase Realtime Database
+        try {
+          const { USE_FIREBASE } = await import('@/config/featureFlags');
+          if (USE_FIREBASE) {
+            const TripsService = await import('@/services/tripsService');
+            const results = await TripsService.searchTrips(get().searchParams);
+            set({ searchResults: results });
+          } else {
+            // Fallback to mock data
+            const results = mockTrips.filter(
+              (trip) => 
+                trip.from.city === from.city && 
+                trip.to.city === to.city
+            );
+            set({ searchResults: results });
+          }
+        } catch (e) {
+          console.error('searchTrips failed', e);
+          // Fallback to mock data on error
+          try {
+            const results = mockTrips.filter(
+              (trip) => 
+                trip.from.city === from.city && 
+                trip.to.city === to.city
+            );
+            set({ searchResults: results });
+          } catch (fallbackError) {
+            console.error('Fallback search failed', fallbackError);
+            throw new Error('Search failed. Please try again.');
+          }
+        }
       },
       
       addRecentSearch: () => {

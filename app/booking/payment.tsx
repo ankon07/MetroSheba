@@ -15,7 +15,7 @@ type PaymentMethod = "bkash" | "card" | "nagad";
 export default function PaymentScreen() {
   const router = useRouter();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
-  const { addTrip } = useUserStore();
+  const { paymentMethods, addTrip, removePaymentMethod } = useUserStore();
   
   // Find the trip in our mock data
   const trip = mockTrips.find((t) => t.id === tripId);

@@ -3,6 +3,8 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppSettings, PaymentMethod, Trip, User } from "@/types";
 import { mockPaymentMethods, mockUser } from "@/mocks/user";
+import { USE_FIREBASE } from "@/config/featureFlags";
+import * as UsersService from "@/services/usersService";
 
 interface UserState {
   user: User | null;
@@ -10,14 +12,14 @@ interface UserState {
   trips: Trip[];
   paymentMethods: PaymentMethod[];
   settings: AppSettings;
-  login: (userData: User) => void;
+  login: (userData: User) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   addTrip: (trip: Trip) => void;
   updateTrip: (tripId: string, status: Trip["status"]) => void;
-  addPaymentMethod: (method: PaymentMethod) => void;
-  removePaymentMethod: (methodId: string) => void;
-  setDefaultPaymentMethod: (methodId: string) => void;
+  addPaymentMethod: (method: PaymentMethod) => Promise<void>;
+  removePaymentMethod: (methodId: string) => Promise<void>;
+  setDefaultPaymentMethod: (methodId: string) => Promise<void>;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
 }
 
@@ -33,20 +35,26 @@ const initialSettings: AppSettings = {
 
 export const useUserStore = create<UserState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isLoggedIn: false,
       trips: [],
       paymentMethods: [],
       settings: initialSettings,
       
-      login: (userData) => {
-        set({ 
-          user: userData, 
-          isLoggedIn: true,
-          // For demo purposes, we'll load mock data
-          paymentMethods: mockPaymentMethods,
-        });
+      login: async (userData) => {
+        if (USE_FIREBASE) {
+          await UsersService.loginOrBootstrap(userData);
+          const methods = await UsersService.getUserPaymentMethods(userData.id);
+          set({ user: userData, isLoggedIn: true, paymentMethods: methods });
+        } else {
+          set({ 
+            user: userData, 
+            isLoggedIn: true,
+            // For demo purposes, we'll load mock data
+            paymentMethods: mockPaymentMethods,
+          });
+        }
       },
       
       logout: () => {
@@ -78,13 +86,19 @@ export const useUserStore = create<UserState>()(
         }));
       },
       
-      addPaymentMethod: (method) => {
+      addPaymentMethod: async (method) => {
+        if (USE_FIREBASE && get().user) {
+          await UsersService.addPaymentMethod(get().user!.id, method);
+        }
         set((state) => ({
           paymentMethods: [...state.paymentMethods, method],
         }));
       },
       
-      removePaymentMethod: (methodId) => {
+      removePaymentMethod: async (methodId) => {
+        if (USE_FIREBASE && get().user) {
+          await UsersService.removePaymentMethod(get().user!.id, methodId);
+        }
         set((state) => ({
           paymentMethods: state.paymentMethods.filter(
             (method) => method.id !== methodId
@@ -92,7 +106,10 @@ export const useUserStore = create<UserState>()(
         }));
       },
       
-      setDefaultPaymentMethod: (methodId) => {
+      setDefaultPaymentMethod: async (methodId) => {
+        if (USE_FIREBASE && get().user) {
+          await UsersService.setDefaultPaymentMethod(get().user!.id, methodId);
+        }
         set((state) => ({
           paymentMethods: state.paymentMethods.map((method) => ({
             ...method,

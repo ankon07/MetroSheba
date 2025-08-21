@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,6 +13,9 @@ import SectionHeader from "@/components/SectionHeader";
 import TransportationIcon from "@/components/TransportationIcon";
 import { useSearchStore } from "@/store/searchStore";
 import Colors from "@/constants/colors";
+import { useToast } from "@/hooks/useToast";
+import Toast from "@/components/Toast";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -23,17 +26,25 @@ export default function SearchScreen() {
     searchTrips,
     addRecentSearch
   } = useSearchStore();
+  const { toast, showError, hideToast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchParams.from || !searchParams.to) {
-      // In a real app, show an error message
-      console.log("Please select origin and destination");
+      showError("Please select both origin and destination");
       return;
     }
 
-    searchTrips();
-    addRecentSearch();
-    router.push("/search/results");
+    try {
+      setLoading(true);
+      await searchTrips();
+      addRecentSearch();
+      router.push("/search/results");
+    } catch (error) {
+      showError("Failed to search trips. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRecentSearchPress = (from: string, to: string) => {
@@ -47,6 +58,13 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <LoadingOverlay visible={loading} message="Searching trips..." />
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

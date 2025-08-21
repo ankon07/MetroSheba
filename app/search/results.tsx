@@ -8,12 +8,14 @@ import TripCard from "@/components/TripCard";
 import { useSearchStore } from "@/store/searchStore";
 import { metroTrips } from "@/mocks/trips";
 import Colors from "@/constants/colors";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 type SortOption = "recommended" | "price" | "duration" | "departure";
 
 export default function ResultsScreen() {
   const router = useRouter();
   const { searchParams, searchResults } = useSearchStore();
+  const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [showSortOptions, setShowSortOptions] = useState(false);
 
@@ -84,6 +86,7 @@ export default function ResultsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <LoadingOverlay visible={loading} message="Loading search results..." />
       <Stack.Screen
         options={{
           headerTitle: "Available Trains",

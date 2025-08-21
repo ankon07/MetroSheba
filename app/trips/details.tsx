@@ -226,46 +226,7 @@ const TripDetails = () => {
         addToCalendar();
         break;
       case 'continue':
-        // Convert MetroTrip to Trip format for payment page compatibility
-        if (currentTrip) {
-          // Create a compatible trip object and add it to mockTrips temporarily
-          const compatibleTrip = {
-            id: currentTrip.id,
-            from: {
-              city: currentTrip.from.name,
-              station: currentTrip.from.name,
-              code: currentTrip.from.code
-            },
-            to: {
-              city: currentTrip.to.name,
-              station: currentTrip.to.name,
-              code: currentTrip.to.code
-            },
-            departureDate: currentTrip.departureDate,
-            departureTime: currentTrip.departureTime,
-            arrivalDate: currentTrip.arrivalDate,
-            arrivalTime: currentTrip.arrivalTime,
-            duration: currentTrip.duration,
-            price: currentTrip.price,
-            transportationType: "train" as const,
-            company: "Dhaka Mass Transit Company Limited",
-            class: "Standard",
-            bookingRef: currentTrip.bookingRef,
-            status: currentTrip.status
-          };
-          
-          // Add to mockTrips if not already there
-          const { mockTrips } = require('../../mocks/trips');
-          const existingTrip = mockTrips.find((t: any) => t.id === compatibleTrip.id);
-          if (!existingTrip) {
-            mockTrips.push(compatibleTrip);
-          }
-        }
-        
-        router.push({
-          pathname: '/booking/payment',
-          params: { tripId: tripData.id }
-        });
+        router.push('/booking/payment');
         break;
     }
   };

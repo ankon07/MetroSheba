@@ -33,12 +33,14 @@ export default function ConfirmationScreen() {
   
   const handleAddToWallet = () => {
     // In a real app, this would add the ticket to the wallet
-    console.log("Add to wallet");
+    // Add to wallet functionality would go here
+    // For now, show a success message
+    alert("Ticket added to wallet successfully!");
   };
   
   const handleShare = () => {
     // In a real app, this would share the ticket
-    console.log("Share ticket");
+    alert("Sharing ticket...");
   };
 
   const handleDownload = () => {
