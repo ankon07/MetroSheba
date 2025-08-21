@@ -1,6 +1,6 @@
 import { Location, MetroStation, MetroLine } from "@/types";
 
-// Dhaka Metro Rail MRT Line-6 Stations (Operational)
+// Dhaka Metro Rail MRT Line-6 Stations (Operational) - Updated with real coordinates from dhakametro.online
 export const mrtLine6Stations: MetroStation[] = [
   {
     id: "uttara-north",
@@ -9,7 +9,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Parking", "Elevator", "Escalator", "Restroom", "ATM", "Food Court"],
-    coordinates: { latitude: 23.8759, longitude: 90.3795 }
+    coordinates: { latitude: 23.8683699, longitude: 90.3671672 }
   },
   {
     id: "uttara-center",
@@ -18,7 +18,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "ATM"],
-    coordinates: { latitude: 23.8697, longitude: 90.3795 }
+    coordinates: { latitude: 23.8589634, longitude: 90.3649124 }
   },
   {
     id: "uttara-south",
@@ -27,7 +27,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom"],
-    coordinates: { latitude: 23.8635, longitude: 90.3795 }
+    coordinates: { latitude: 23.8450371, longitude: 90.3632699 }
   },
   {
     id: "pallabi",
@@ -36,25 +36,25 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "Shopping"],
-    coordinates: { latitude: 23.8573, longitude: 90.3795 }
+    coordinates: { latitude: 23.8253510, longitude: 90.3643807 }
   },
   {
     id: "mirpur-11",
-    name: "Mirpur 11",
+    name: "Mirpur-11",
     code: "M11",
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom"],
-    coordinates: { latitude: 23.8511, longitude: 90.3795 }
+    coordinates: { latitude: 23.8183433, longitude: 90.3656327 }
   },
   {
     id: "mirpur-10",
-    name: "Mirpur 10",
+    name: "Mirpur-10",
     code: "M10",
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "Shopping", "Food Court"],
-    coordinates: { latitude: 23.8449, longitude: 90.3795 }
+    coordinates: { latitude: 23.8072257, longitude: 90.3684888 }
   },
   {
     id: "kazipara",
@@ -63,7 +63,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom"],
-    coordinates: { latitude: 23.8387, longitude: 90.3795 }
+    coordinates: { latitude: 23.7997618, longitude: 90.3717708 }
   },
   {
     id: "shewrapara",
@@ -72,7 +72,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom"],
-    coordinates: { latitude: 23.8325, longitude: 90.3795 }
+    coordinates: { latitude: 23.7910148, longitude: 90.3752242 }
   },
   {
     id: "agargaon",
@@ -81,7 +81,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "ATM"],
-    coordinates: { latitude: 23.7775, longitude: 90.3795 }
+    coordinates: { latitude: 23.7783780, longitude: 90.3799966 }
   },
   {
     id: "bijoy-sarani",
@@ -90,7 +90,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom"],
-    coordinates: { latitude: 23.7635, longitude: 90.3795 }
+    coordinates: { latitude: 23.7668781, longitude: 90.3830571 }
   },
   {
     id: "farmgate",
@@ -99,25 +99,25 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "Shopping", "Food Court"],
-    coordinates: { latitude: 23.7575, longitude: 90.3795 }
+    coordinates: { latitude: 23.7581470, longitude: 90.3896469 }
   },
   {
-    id: "karwan-bazar",
-    name: "Karwan Bazar",
+    id: "kawran-bazar",
+    name: "Kawran Bazar",
     code: "KB",
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "ATM"],
-    coordinates: { latitude: 23.7515, longitude: 90.3795 }
+    coordinates: { latitude: 23.7512656, longitude: 90.3927762 }
   },
   {
-    id: "shahbagh",
-    name: "Shahbagh",
+    id: "shahbag",
+    name: "Shahbag",
     code: "SB",
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom"],
-    coordinates: { latitude: 23.7455, longitude: 90.3795 }
+    coordinates: { latitude: 23.7400837, longitude: 90.3960061 }
   },
   {
     id: "dhaka-university",
@@ -126,7 +126,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "Student Services"],
-    coordinates: { latitude: 23.7395, longitude: 90.3795 }
+    coordinates: { latitude: 23.7316979, longitude: 90.3968427 }
   },
   {
     id: "bangladesh-secretariat",
@@ -135,7 +135,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "Security Check"],
-    coordinates: { latitude: 23.7335, longitude: 90.3795 }
+    coordinates: { latitude: 23.7300126, longitude: 90.4074836 }
   },
   {
     id: "motijheel",
@@ -144,7 +144,7 @@ export const mrtLine6Stations: MetroStation[] = [
     line: "MRT-6",
     isOperational: true,
     facilities: ["Elevator", "Escalator", "Restroom", "ATM", "Shopping", "Food Court"],
-    coordinates: { latitude: 23.7275, longitude: 90.3795 }
+    coordinates: { latitude: 23.7280587, longitude: 90.4190551 }
   },
 ];
 
@@ -204,4 +204,30 @@ export const calculateFare = (fromStation: MetroStation, toStation: MetroStation
   if (distance <= 10) return 60; // 9-10 stations: ৳60
   if (distance <= 12) return 80; // 11-12 stations: ৳80
   return 100; // Full route (13+ stations): ৳100
+};
+
+// Helper function to get route polyline coordinates for map display
+export const getRoutePolyline = (): { latitude: number; longitude: number }[] => {
+  return mrtLine6Stations.map(station => station.coordinates).filter(coord => coord !== undefined);
+};
+
+// Helper function to get map region that fits all stations
+export const getMapRegion = () => {
+  const latitudes = mrtLine6Stations.map(station => station.coordinates?.latitude).filter(lat => lat !== undefined) as number[];
+  const longitudes = mrtLine6Stations.map(station => station.coordinates?.longitude).filter(lng => lng !== undefined) as number[];
+  
+  const minLat = Math.min(...latitudes);
+  const maxLat = Math.max(...latitudes);
+  const minLng = Math.min(...longitudes);
+  const maxLng = Math.max(...longitudes);
+  
+  const latDelta = (maxLat - minLat) * 1.2; // Add 20% padding
+  const lngDelta = (maxLng - minLng) * 1.2; // Add 20% padding
+  
+  return {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLng + maxLng) / 2,
+    latitudeDelta: Math.max(latDelta, 0.01), // Minimum zoom level
+    longitudeDelta: Math.max(lngDelta, 0.01), // Minimum zoom level
+  };
 };

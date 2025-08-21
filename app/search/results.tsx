@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { StyleSheet, Text, View, FlatList, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { ArrowLeft, Filter, ArrowUpDown } from "lucide-react-native";
 import TripCard from "@/components/TripCard";
+import FilterModal, { FilterOptions } from "@/components/FilterModal";
 import { useSearchStore } from "@/store/searchStore";
 import { metroTrips } from "@/mocks/trips";
+import { mrtLine6Stations } from "@/mocks/locations";
 import Colors from "@/constants/colors";
 import LoadingOverlay from "@/components/LoadingOverlay";
 
@@ -18,29 +20,75 @@ export default function ResultsScreen() {
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [showSortOptions, setShowSortOptions] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<FilterOptions>({
+    priceRange: { min: 0, max: 1000 },
+    timeRange: { start: "00:00", end: "23:59" },
+    stations: [],
+    showOnlyDirectRoutes: false,
+    showEcoFriendlyOnly: false,
+    minOnTimePerformance: 0,
+  });
 
-  // Use metro trips if no search results, filter by search parameters if available
-  const hasResults = searchResults.length > 0;
-  let filteredTrips = metroTrips;
-  
-  // Filter by search parameters if available
-  if (searchParams.from?.city && searchParams.to?.city) {
-    filteredTrips = metroTrips.filter(trip => 
-      trip.from.name === searchParams.from?.city && 
-      trip.to.name === searchParams.to?.city
-    );
-  }
-  
-  // If no specific route searched, show a variety of trips from different stations
-  if (!searchParams.from?.city || !searchParams.to?.city) {
-    // Get today's trips and limit to reasonable number
+  // Get all available trips and apply filters
+  const allTrips = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    filteredTrips = metroTrips
-      .filter(trip => trip.departureDate === today)
-      .slice(0, 20);
-  }
-  
-  const displayResults = hasResults ? searchResults : filteredTrips.slice(0, 15).map(trip => ({
+    let trips = metroTrips.filter(trip => trip.departureDate === today);
+    
+    // If specific route is searched, filter by it
+    if (searchParams.from?.city && searchParams.to?.city) {
+      trips = trips.filter(trip => 
+        trip.from.name === searchParams.from?.city && 
+        trip.to.name === searchParams.to?.city
+      );
+    }
+    
+    return trips;
+  }, [searchParams.from?.city, searchParams.to?.city]);
+
+  // Apply filters to trips
+  const filteredTrips = useMemo(() => {
+    let filtered = allTrips;
+
+    // Price filter
+    if (activeFilters.priceRange.max < 1000) {
+      filtered = filtered.filter(trip => 
+        trip.price >= activeFilters.priceRange.min && 
+        trip.price <= activeFilters.priceRange.max
+      );
+    }
+
+    // Time filter
+    if (activeFilters.timeRange.start !== "00:00" || activeFilters.timeRange.end !== "23:59") {
+      filtered = filtered.filter(trip => {
+        const departureTime = trip.departureTime;
+        return departureTime >= activeFilters.timeRange.start && 
+               departureTime <= activeFilters.timeRange.end;
+      });
+    }
+
+    // Station filter (via stations)
+    if (activeFilters.stations.length > 0) {
+      filtered = filtered.filter(trip => 
+        activeFilters.stations.includes(trip.from.id) || 
+        activeFilters.stations.includes(trip.to.id)
+      );
+    }
+
+    // Eco-friendly filter
+    if (activeFilters.showEcoFriendlyOnly) {
+      filtered = filtered.filter(trip => trip.isEcoFriendly);
+    }
+
+    // On-time performance filter
+    if (activeFilters.minOnTimePerformance > 0) {
+      filtered = filtered.filter(trip => trip.onTimePerformance >= activeFilters.minOnTimePerformance);
+    }
+
+    return filtered;
+  }, [allTrips, activeFilters]);
+
+  const displayResults = filteredTrips.map(trip => ({
     id: trip.id,
     from: { city: trip.from.name, station: `${trip.from.name} Metro Station`, code: trip.from.code },
     to: { city: trip.to.name, station: `${trip.to.name} Metro Station`, code: trip.to.code },
@@ -84,6 +132,21 @@ export default function ResultsScreen() {
     setShowSortOptions(false);
   };
 
+  const handleFilterApply = (filters: FilterOptions) => {
+    setActiveFilters(filters);
+  };
+
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (activeFilters.priceRange.max < 1000) count++;
+    if (activeFilters.timeRange.start !== "00:00" || activeFilters.timeRange.end !== "23:59") count++;
+    if (activeFilters.stations.length > 0) count++;
+    if (activeFilters.showOnlyDirectRoutes) count++;
+    if (activeFilters.showEcoFriendlyOnly) count++;
+    if (activeFilters.minOnTimePerformance > 0) count++;
+    return count;
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <LoadingOverlay visible={loading} message="Loading search results..." />
@@ -100,17 +163,34 @@ export default function ResultsScreen() {
 
       <View style={styles.routeInfo}>
         <Text style={styles.routeTitle}>
-          {searchParams.from?.city} — {searchParams.to?.city}
+          {searchParams.from?.city && searchParams.to?.city 
+            ? `${searchParams.from.city} — ${searchParams.to.city}`
+            : "All Available Trains"
+          }
         </Text>
         <Text style={styles.routeDetails}>
           {new Date(searchParams.date).toLocaleDateString()} • {searchParams.passengers} {searchParams.passengers === 1 ? "Adult" : "Adults"}
         </Text>
+        <Text style={styles.resultsCount}>
+          {displayResults.length} trains found
+        </Text>
       </View>
 
       <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.filterButton}>
-          <Filter size={16} color={Colors.text.primary} />
-          <Text style={styles.filterText}>Filter</Text>
+        <TouchableOpacity 
+          style={[
+            styles.filterButton,
+            getActiveFilterCount() > 0 && styles.activeFilterButton
+          ]} 
+          onPress={() => setShowFilterModal(true)}
+        >
+          <Filter size={16} color={getActiveFilterCount() > 0 ? Colors.background : Colors.text.primary} />
+          <Text style={[
+            styles.filterText,
+            getActiveFilterCount() > 0 && styles.activeFilterText
+          ]}>
+            Filter {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.sortButton} onPress={toggleSortOptions}>
@@ -190,7 +270,7 @@ export default function ResultsScreen() {
         </View>
       )}
 
-      <FlatList
+        <FlatList
         data={sortedResults}
         renderItem={({ item }) => (
           <TripCard
@@ -202,12 +282,20 @@ export default function ResultsScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No trips found</Text>
+            <Text style={styles.emptyTitle}>No trains found</Text>
             <Text style={styles.emptyDescription}>
-              Try changing your search criteria or dates
+              Try adjusting your filters or search criteria
             </Text>
           </View>
         }
+      />
+
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleFilterApply}
+        currentFilters={activeFilters}
+        availableStations={mrtLine6Stations}
       />
     </SafeAreaView>
   );
@@ -232,6 +320,12 @@ const styles = StyleSheet.create({
   routeDetails: {
     fontSize: 14,
     color: Colors.text.secondary,
+    marginBottom: 4,
+  },
+  resultsCount: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: "600",
   },
   filterBar: {
     flexDirection: "row",
@@ -248,11 +342,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 12,
   },
+  activeFilterButton: {
+    backgroundColor: Colors.primary,
+  },
   filterText: {
     fontSize: 14,
     fontWeight: "600",
     color: Colors.text.primary,
     marginLeft: 4,
+  },
+  activeFilterText: {
+    color: Colors.background,
   },
   sortButton: {
     flexDirection: "row",

@@ -15,6 +15,7 @@ import * as Calendar from 'expo-calendar';
 import colors from '../../constants/colors';
 import Button from '../../components/Button';
 import InteractiveRouteMap from '../../components/InteractiveRouteMap';
+import MetroMapView from '../../components/MetroMapView';
 import { metroTrips, getMetroTripsForRoute } from '../../mocks/trips';
 import { mrtLine6Stations, calculateFare } from '../../mocks/locations';
 
@@ -243,15 +244,19 @@ const TripDetails = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Interactive Route Map */}
-      <InteractiveRouteMap
-        fromStationId={tripData.fromStationId}
-        toStationId={tripData.toStationId}
-        departureTime={tripData.departureTime}
-        arrivalTime={tripData.arrivalTime}
-        trainNumber={tripData.trainNumber}
-        isRealTime={true}
-      />
+      {/* Interactive Metro Map */}
+      <View style={styles.mapContainer}>
+        <MetroMapView
+          fromStationId={tripData.fromStationId}
+          toStationId={tripData.toStationId}
+          showRoute={true}
+          height={250}
+          showUserLocation={false}
+          onStationPress={(stationId) => {
+            console.log('Station pressed:', stationId);
+          }}
+        />
+      </View>
 
       {/* Trip Info */}
       <View style={styles.tripInfo}>
@@ -556,10 +561,10 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   mapContainer: {
-    height: 200,
-    backgroundColor: colors.surface,
+    height: 250,
     margin: 16,
     borderRadius: 12,
+    overflow: 'hidden',
     position: 'relative',
   },
   mapPlaceholder: {
