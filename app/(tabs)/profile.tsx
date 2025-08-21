@@ -5,11 +5,24 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight, CreditCard, User, Award, LogOut, Edit, HelpCircle, Settings as SettingsIcon } from "lucide-react-native";
 import ProfileStats from "@/components/ProfileStats";
 import { useUserStore } from "@/store/userStore";
+import { USE_FIREBASE } from '@/config/featureFlags';
+import * as UsersService from '@/services/usersService';
 import Colors from "@/constants/colors";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useUserStore();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Clear cache on logout
+      const { CacheManager } = await import('@/utils/cacheManager');
+      await CacheManager.clear();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   if (!user) {
     return (
@@ -173,7 +186,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           style={styles.logoutButton}
-          onPress={() => logout()}
+          onPress={handleLogout}
         >
           <LogOut size={20} color={Colors.error} />
           <Text style={styles.logoutText}>Log Out</Text>

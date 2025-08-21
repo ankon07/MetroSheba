@@ -6,6 +6,9 @@ import { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import Colors from "@/constants/colors";
 import { initializeUser } from "@/store/userStore";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import OfflineBanner from "@/components/OfflineBanner";
+import { useOfflineHandler } from "@/hooks/useOfflineHandler";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -31,6 +34,18 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
       // Initialize mock user for demo
       initializeUser();
+      // Seed Firebase once so the app shows real data
+      (async () => {
+        try {
+          const { USE_FIREBASE } = await import('@/config/featureFlags');
+          if (USE_FIREBASE) {
+            const { seedIfEmpty } = await import('@/services/devSeed');
+            await seedIfEmpty();
+          }
+        } catch (e) {
+          console.log('Seed skipped', e);
+        }
+      })();
     }
   }, [loaded]);
 
@@ -38,13 +53,20 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <ErrorBoundary>
+      <RootLayoutNav />
+    </ErrorBoundary>
+  );
 }
 
 function RootLayoutNav() {
+  const { showOfflineMessage } = useOfflineHandler();
+
   return (
     <>
       <StatusBar style="dark" />
+      <OfflineBanner visible={showOfflineMessage} />
       <Stack
         screenOptions={{
           headerBackTitle: "Back",
@@ -85,6 +107,12 @@ function RootLayoutNav() {
           options={{ 
             title: "Select Date",
             presentation: "modal",
+          }} 
+        />
+        <Stack.Screen 
+          name="search/results" 
+          options={{ 
+            title: "Search Results",
           }} 
         />
         <Stack.Screen 

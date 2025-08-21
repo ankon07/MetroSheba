@@ -226,7 +226,7 @@ const TripDetails = () => {
         addToCalendar();
         break;
       case 'continue':
-        router.push('/booking/payment');
+        router.push({ pathname: '/booking/payment', params: { tripId: (currentTrip?.id || String(id)) as string } });
         break;
     }
   };

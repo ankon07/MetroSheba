@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View, ScrollView, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,8 +8,9 @@ import SectionHeader from "@/components/SectionHeader";
 import UpcomingTrainCard from "@/components/UpcomingTrainCard";
 import DestinationCard from "@/components/DestinationCard";
 import AnimatedCard from "@/components/AnimatedCard";
+import LoadingOverlay from "@/components/LoadingOverlay";
 import { TransportationType } from "@/types";
-import { upcomingTrains, popularDestinations } from "@/mocks/trips";
+// import { upcomingTrains, popularDestinations } from "@/mocks/trips";
 import { useSearchStore } from "@/store/searchStore";
 import { useUserStore } from "@/store/userStore";
 import Colors from "@/constants/colors";
@@ -20,6 +21,56 @@ export default function HomeScreen() {
   const { setSearchParams } = useSearchStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTransportationType, setSelectedTransportationType] = useState<TransportationType>("train");
+  const [upcoming, setUpcoming] = useState<any[]>([]);
+  const [popular, setPopular] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+
+    (async () => {
+      try {
+        const { USE_FIREBASE } = await import('@/config/featureFlags');
+        if (USE_FIREBASE) {
+          const TripsService = await import('@/services/tripsService');
+          const { RealtimeService } = await import('@/services/realtimeService');
+          
+          // Load initial data
+          const [u, p] = await Promise.all([
+            TripsService.getUpcomingTrains(5),
+            TripsService.getPopularDestinations(),
+          ]);
+          setUpcoming(u);
+          setPopular(p);
+
+          // Subscribe to realtime updates for upcoming trains
+          unsubscribe = RealtimeService.subscribeToUpcomingTrains((trains) => {
+            setUpcoming(trains);
+          }, 5);
+        } else {
+          const { upcomingTrains, popularDestinations } = await import('@/mocks/trips');
+          setUpcoming(upcomingTrains.slice(0, 5));
+          setPopular(popularDestinations);
+        }
+      } catch (e) {
+        console.warn('Failed to load home data', e);
+        // Fallback to mocks on error
+        try {
+          const { upcomingTrains, popularDestinations } = await import('@/mocks/trips');
+          setUpcoming(upcomingTrains.slice(0, 5));
+          setPopular(popularDestinations);
+        } catch (fallbackError) {
+          console.error('Failed to load fallback data', fallbackError);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   const handleSearchPress = () => {
     router.push("/search");
@@ -55,6 +106,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <LoadingOverlay visible={loading} message="Loading metro data" />
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -93,7 +145,7 @@ export default function HomeScreen() {
         
         <AnimatedCard delay={800}>
           <FlatList
-            data={upcomingTrains.slice(0, 5)}
+            data={upcoming}
             horizontal
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => (
@@ -117,7 +169,7 @@ export default function HomeScreen() {
         
         <AnimatedCard delay={1200}>
           <View style={styles.destinationsContainer}>
-            {popularDestinations.map((destination) => (
+            {popular.map((destination) => (
               <View key={destination.id} style={styles.destinationItem}>
                 <DestinationCard
                   from={destination.from}

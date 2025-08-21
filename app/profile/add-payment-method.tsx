@@ -42,7 +42,7 @@ export default function AddPaymentMethodScreen() {
     setCardData((prev) => ({ ...prev, isDefault: !prev.isDefault }));
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate inputs
     if (!cardData.cardholderName || !cardData.cardNumber || !cardData.expiryDate || !cardData.cvv) {
       alert("Please fill in all required fields");
@@ -53,15 +53,20 @@ export default function AddPaymentMethodScreen() {
     const lastFour = cardData.cardNumber.slice(-4);
     
     // Add payment method
-    addPaymentMethod({
-      id: `pm${Date.now()}`,
-      type: cardType,
-      lastFour,
-      expiryDate: cardData.expiryDate,
-      isDefault: cardData.isDefault,
-    });
-    
-    router.back();
+    try {
+      await addPaymentMethod({
+        id: `pm${Date.now()}`,
+        type: cardType,
+        lastFour,
+        expiryDate: cardData.expiryDate,
+        isDefault: cardData.isDefault,
+      });
+      
+      router.back();
+    } catch (error) {
+      console.error("Failed to add payment method:", error);
+      alert("Failed to add payment method. Please try again.");
+    }
   };
 
   return (

@@ -29,6 +29,7 @@
     "expo-symbols": "~0.4.4",
     "expo-system-ui": "~5.0.6",
     "expo-web-browser": "~14.1.6",
+    "firebase": "^12.1.0",
     "lucide-react-native": "^0.537.0",
     "nativewind": "^4.1.23",
     "react": "19.0.0",
@@ -39,7 +40,8 @@
     "react-native-screens": "~4.10.0",
     "react-native-svg": "15.11.2",
     "react-native-web": "^0.20.0",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.2",
+    "firebase": "^10.12.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

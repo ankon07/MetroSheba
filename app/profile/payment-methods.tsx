@@ -35,21 +35,31 @@ export default function PaymentMethodsScreen() {
         },
         {
           text: "Delete",
-          onPress: () => removePaymentMethod(id),
+          onPress: async () => {
+            try {
+              await removePaymentMethod(id);
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete payment method. Please try again.");
+            }
+          },
           style: "destructive",
         },
       ]
     );
   };
 
-  const handleSetDefault = () => {
+  const handleSetDefault = async () => {
     if (selectedMethod) {
-      setDefaultPaymentMethod(selectedMethod);
-      Alert.alert(
-        "Default Payment Method",
-        "Your default payment method has been updated.",
-        [{ text: "OK" }]
-      );
+      try {
+        await setDefaultPaymentMethod(selectedMethod);
+        Alert.alert(
+          "Default Payment Method",
+          "Your default payment method has been updated.",
+          [{ text: "OK" }]
+        );
+      } catch (error) {
+        Alert.alert("Error", "Failed to update default payment method. Please try again.");
+      }
     }
   };
 

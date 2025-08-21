@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, FlatList, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MapPin } from "lucide-react-native";
 import SearchBar from "@/components/SearchBar";
+import LoadingOverlay from "@/components/LoadingOverlay";
 import { popularLocations } from "@/mocks/locations";
+import { USE_FIREBASE } from "@/config/featureFlags";
+import * as StationsService from "@/services/stationsService";
 import { useSearchStore } from "@/store/searchStore";
 import Colors from "@/constants/colors";
 
@@ -13,8 +16,33 @@ export default function LocationSelectScreen() {
   const { type } = useLocalSearchParams<{ type: "from" | "to" }>();
   const { setSearchParams } = useSearchStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [locations, setLocations] = useState(popularLocations);
+  const [loading, setLoading] = useState(false);
 
-  const filteredLocations = popularLocations.filter((location) =>
+  useEffect(() => {
+    loadLocations();
+  }, []);
+
+  const loadLocations = async () => {
+    if (!USE_FIREBASE) return;
+    
+    try {
+      setLoading(true);
+      const stations = await StationsService.getStations();
+      const locationData = stations.map(station => ({
+        city: station.name,
+        station: `${station.name} Metro Station`,
+        code: station.code,
+      }));
+      setLocations(locationData);
+    } catch (error) {
+      console.warn('Failed to load stations from Firebase, using mocks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredLocations = locations.filter((location) =>
     location.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
     location.station.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -30,6 +58,7 @@ export default function LocationSelectScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <LoadingOverlay visible={loading} message="Loading stations..." />
       <View style={styles.header}>
         <Text style={styles.title}>
           {type === "from" ? "Select Origin" : "Select Destination"}

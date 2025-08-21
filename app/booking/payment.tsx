@@ -13,7 +13,7 @@ import Colors from "@/constants/colors";
 export default function PaymentScreen() {
   const router = useRouter();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
-  const { paymentMethods, addTrip } = useUserStore();
+  const { paymentMethods, addTrip, removePaymentMethod } = useUserStore();
   
   // Find the trip in our mock data
   const trip = mockTrips.find((t) => t.id === tripId);
@@ -45,9 +45,12 @@ export default function PaymentScreen() {
     setShowNewCardForm(true);
   };
   
-  const handlePaymentMethodDelete = (id: string) => {
-    // In a real app, this would remove the payment method
-    console.log("Delete payment method:", id);
+  const handlePaymentMethodDelete = async (id: string) => {
+    try {
+      await removePaymentMethod(id);
+    } catch (error) {
+      console.error("Failed to delete payment method:", error);
+    }
   };
   
   const handlePayment = () => {
