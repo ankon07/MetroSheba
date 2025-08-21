@@ -7,109 +7,109 @@ import { Calendar, Clock, Info, Tag, Share2 } from "lucide-react-native";
 import Button from "@/components/Button";
 import Colors from "@/constants/colors";
 
-// Extended offer details
+// Extended offer details for Dhaka Metro
 const offerDetails = {
   "offer1": {
     id: "offer1",
-    title: "20% Off Europe Trains",
-    description: "Book by July 31st",
-    fullDescription: "Enjoy 20% off on all train journeys across Europe. Perfect for summer vacations and exploring multiple cities. Valid for bookings made before July 31st, 2025 for travel until December 31st, 2025.",
-    image: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
+    title: "Student Discount",
+    description: "20% off with student ID",
+    fullDescription: "Students get 20% off on all Dhaka Metro Rail journeys. Perfect for daily commuting to universities and colleges. Valid with student ID card from recognized educational institutions.",
+    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
     discount: "20%",
-    validUntil: "2025-07-31",
+    validUntil: "2025-12-31",
     terms: [
-      "Valid for bookings made before July 31st, 2025",
-      "Travel period: Until December 31st, 2025",
-      "Applicable on Economy and Business class",
+      "Valid student ID required at all times",
+      "Applicable on all MRT Line-6 stations",
       "Cannot be combined with other offers",
-      "Subject to availability"
+      "Valid for students aged 18-25",
+      "Subject to verification"
     ],
-    routes: ["London - Paris", "Amsterdam - Berlin", "Madrid - Barcelona", "Rome - Florence"]
+    routes: ["Uttara North - Motijheel", "Pallabi - Karwan Bazar", "Mirpur-10 - Secretariat", "Agargaon - Dhaka University"]
   },
   "offer2": {
     id: "offer2",
-    title: "Summer Flight Deals",
-    description: "From $49 one-way",
-    fullDescription: "Take advantage of our summer flight deals with prices starting from just $49 one-way. Explore new destinations without breaking the bank. Limited seats available at this price.",
-    image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
-    discount: "From $49",
-    validUntil: "2025-08-15",
+    title: "Off-Peak Hours Special",
+    description: "From ৳15 one-way",
+    fullDescription: "Travel during off-peak hours and save money! Enjoy discounted fares starting from just ৳15 one-way during non-rush hours. Perfect for flexible travelers and tourists exploring Dhaka.",
+    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
+    discount: "From ৳15",
+    validUntil: "2025-08-31",
     terms: [
-      "Valid for bookings made before August 15th, 2025",
-      "Travel period: June 1st - September 30th, 2025",
+      "Valid during off-peak hours: 10 AM - 4 PM and after 8 PM",
+      "Weekends: All day discounted rates",
       "Limited seats available at advertised price",
-      "Baggage restrictions may apply",
+      "Not applicable during rush hours",
       "Subject to availability"
     ],
-    routes: ["New York - Miami", "Los Angeles - San Francisco", "Chicago - Denver", "Boston - Washington DC"]
+    routes: ["Uttara North - Agargaon", "Mirpur-11 - Farmgate", "Bijoy Sarani - New Market", "Shahbagh - Motijheel"]
   },
   "offer3": {
     id: "offer3",
-    title: "Weekend Getaway",
-    description: "30% off hotel packages",
-    fullDescription: "Plan the perfect weekend escape with our hotel packages at 30% off regular rates. Includes accommodation, breakfast, and special perks at select properties.",
-    image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
-    discount: "30%",
+    title: "Weekend Explorer Pass",
+    description: "Unlimited rides for ৳100",
+    fullDescription: "Explore Dhaka on weekends with unlimited metro rides for just ৳100 per day. Visit shopping malls, tourist attractions, and cultural sites across the city without worrying about individual ticket costs.",
+    image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
+    discount: "৳100/day",
     validUntil: "2025-09-30",
     terms: [
-      "Valid for bookings made before September 30th, 2025",
-      "Travel period: Until December 15th, 2025",
-      "Minimum 2-night stay required",
-      "Includes breakfast for two",
+      "Valid on Saturdays and Sundays only",
+      "24-hour validity from first use",
+      "Non-transferable pass",
+      "Valid on all MRT Line-6 stations",
       "Subject to availability"
     ],
-    routes: []
+    routes: ["All MRT Line-6 stations"]
   },
   "offer4": {
     id: "offer4",
-    title: "Business Class Upgrade",
-    description: "Only $99 extra",
-    fullDescription: "Upgrade your journey with our special Business Class offer. For just $99 extra, enjoy premium seating, priority boarding, and exclusive lounge access on select routes.",
-    image: "https://images.unsplash.com/photo-1540339832862-474599807836?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
-    discount: "$99",
-    validUntil: "2025-10-15",
+    title: "Senior Citizen Discount",
+    description: "50% off for 60+ age",
+    fullDescription: "Senior citizens aged 60 and above enjoy 50% discount on all Dhaka Metro Rail journeys. Making public transport more accessible and affordable for our elderly citizens.",
+    image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
+    discount: "50%",
+    validUntil: "2025-12-31",
     terms: [
-      "Valid for bookings made before October 15th, 2025",
-      "Travel period: Until December 31st, 2025",
-      "Applicable on select routes only",
-      "Subject to seat availability",
-      "Cannot be combined with other offers"
+      "Valid for citizens aged 60 and above",
+      "National ID or passport required for verification",
+      "Applicable on all routes and times",
+      "Cannot be combined with other offers",
+      "Valid throughout the year"
     ],
-    routes: ["London - New York", "Paris - Tokyo", "Dubai - Singapore", "Sydney - Los Angeles"]
+    routes: ["All MRT Line-6 stations", "Future Line-1 and Line-5 stations"]
   },
   "offer5": {
     id: "offer5",
     title: "Family Package",
-    description: "Kids travel free",
-    fullDescription: "Make family travel more affordable with our special family package. Children under 12 travel free when accompanied by two paying adults. Perfect for school holidays and family vacations.",
-    image: "https://images.unsplash.com/photo-1541417904950-b855846fe074?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
+    description: "Kids under 10 travel free",
+    fullDescription: "Make family outings more affordable! Children under 10 years travel free when accompanied by paying adults. Perfect for family trips to shopping centers, parks, and cultural attractions.",
+    image: "https://images.unsplash.com/photo-1511895426328-dc8714191300?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
     discount: "Kids Free",
-    validUntil: "2025-08-31",
+    validUntil: "2025-12-31",
     terms: [
-      "Valid for bookings made before August 31st, 2025",
-      "Travel period: Until December 15th, 2025",
-      "Children must be under 12 years of age",
-      "Maximum 2 children per 2 paying adults",
-      "Valid ID required at check-in"
+      "Children must be under 10 years of age",
+      "Maximum 2 children per paying adult",
+      "Age verification may be required",
+      "Valid on all routes and times",
+      "Cannot be combined with other discounts"
     ],
-    routes: ["All domestic routes", "Select international routes"]
+    routes: ["All MRT Line-6 stations", "Perfect for trips to Bashundhara City", "New Market", "Dhanmondi Lake"]
   },
   "offer6": {
     id: "offer6",
-    title: "Last Minute Deals",
-    description: "Up to 40% off",
-    fullDescription: "Spontaneous traveler? Take advantage of our last-minute deals with up to 40% off regular fares. Book within 72 hours of departure and save big on your next adventure.",
-    image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
-    discount: "40%",
+    title: "Monthly Pass Special",
+    description: "Save up to 30%",
+    fullDescription: "Regular commuters save big with monthly passes! Get up to 30% savings compared to daily tickets. Perfect for office workers, students, and frequent travelers on the Dhaka Metro Rail network.",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
+    discount: "30%",
     validUntil: "2025-12-31",
     terms: [
-      "Must book within 72 hours of departure",
-      "Valid for travel until December 31st, 2025",
-      "Discount varies based on route and availability",
-      "No changes or cancellations allowed",
-      "Subject to availability"
+      "Valid for 30 consecutive days from activation",
+      "Non-transferable and non-refundable",
+      "Unlimited rides within validity period",
+      "Available at all metro stations",
+      "Auto-renewal option available"
     ],
-    routes: ["All routes subject to availability"]
+    routes: ["All MRT Line-6 stations", "Future expansion lines included"]
   }
 };
 
@@ -150,7 +150,7 @@ export default function OfferDetailsScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Stack.Screen
         options={{
-          title: "Offer Details",
+          title: "Metro Offer Details",
           headerRight: () => (
             <TouchableOpacity onPress={handleShare}>
               <Share2 size={24} color={Colors.primary} />
@@ -230,7 +230,7 @@ export default function OfferDetailsScreen() {
                   <Text style={styles.stepNumberText}>1</Text>
                 </View>
                 <Text style={styles.stepText}>
-                  Search for your desired route and dates
+                  Visit any Dhaka Metro Rail station
                 </Text>
               </View>
               <View style={styles.redemptionStep}>
@@ -238,7 +238,7 @@ export default function OfferDetailsScreen() {
                   <Text style={styles.stepNumberText}>2</Text>
                 </View>
                 <Text style={styles.stepText}>
-                  Select this offer during checkout
+                  Show this offer and required documents at ticket counter
                 </Text>
               </View>
               <View style={styles.redemptionStep}>
@@ -246,7 +246,7 @@ export default function OfferDetailsScreen() {
                   <Text style={styles.stepNumberText}>3</Text>
                 </View>
                 <Text style={styles.stepText}>
-                  Discount will be automatically applied
+                  Discount will be applied to your ticket purchase
                 </Text>
               </View>
             </View>
@@ -264,7 +264,7 @@ export default function OfferDetailsScreen() {
               
               <View style={styles.disclaimerContainer}>
                 <Text style={styles.disclaimerText}>
-                  This offer is subject to change without notice. The company reserves the right to modify or cancel this promotion at any time. For complete terms and conditions, please contact customer service.
+                  This offer is subject to change without notice. Dhaka Mass Transit Company Limited reserves the right to modify or cancel this promotion at any time. For complete terms and conditions, please contact customer service at any metro station.
                 </Text>
               </View>
             </View>
@@ -280,7 +280,7 @@ export default function OfferDetailsScreen() {
           </Text>
         </View>
         <Button
-          title="Book Now"
+          title="Book Metro Ticket"
           onPress={handleBookNow}
           style={styles.bookButton}
         />

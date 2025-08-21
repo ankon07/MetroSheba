@@ -90,6 +90,8 @@ export default function MetroMapView({
     <title>Dhaka Metro Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <style>
         body { margin: 0; padding: 0; }
         #map { height: 100vh; width: 100vw; }
@@ -135,6 +137,13 @@ export default function MetroMapView({
         .status-destination { background: #ef4444; color: white; }
         .status-current { background: #3b82f6; color: white; }
         .status-route { background: #f59e0b; color: white; }
+        .leaflet-routing-container {
+            display: none !important;
+        }
+        .leaflet-popup-content {
+            margin: 8px 12px;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -150,6 +159,15 @@ export default function MetroMapView({
 
         // Station data
         var stations = ${JSON.stringify(stations)};
+        var routingControl = null;
+        var originStation = null;
+        var destinationStation = null;
+        
+        // Find origin and destination stations
+        stations.forEach(function(station) {
+            if (station.isOrigin) originStation = station;
+            if (station.isDestination) destinationStation = station;
+        });
         
         // Add route polyline if showing route
         ${routeCoordinates ? `
@@ -244,6 +262,107 @@ export default function MetroMapView({
         }
         `}
         
+        // Function to show road route between two points
+        function showRoadRoute(startLat, startLng, endLat, endLng, clickedLat, clickedLng) {
+            // Remove existing routing control
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+            
+            // Create routing control
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(startLat, startLng),
+                    L.latLng(endLat, endLng)
+                ],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                createMarker: function() { return null; }, // Don't create default markers
+                lineOptions: {
+                    styles: [{
+                        color: '#ff6b35',
+                        weight: 5,
+                        opacity: 0.8
+                    }]
+                },
+                show: false, // Hide the instruction panel
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                })
+            }).addTo(map);
+            
+            // Handle routing found
+            routingControl.on('routesfound', function(e) {
+                var routes = e.routes;
+                var summary = routes[0].summary;
+                
+                // Create popup content with route information
+                var popupContent = '<div class="station-popup">' +
+                    '<div class="station-name">🛣️ Road Route</div>' +
+                    '<div class="station-code">From Origin to Destination</div>' +
+                    '<div class="station-coords">Distance: ' + (summary.totalDistance / 1000).toFixed(2) + ' km</div>' +
+                    '<div class="station-coords">Duration: ' + Math.round(summary.totalTime / 60) + ' minutes</div>' +
+                    '<div class="station-status status-route">Click coordinates: ' + clickedLat.toFixed(6) + ', ' + clickedLng.toFixed(6) + '</div>' +
+                '</div>';
+                
+                // Show popup at clicked location
+                L.popup()
+                    .setLatLng([clickedLat, clickedLng])
+                    .setContent(popupContent)
+                    .openOn(map);
+            });
+        }
+        
+        // Handle map click to show road route
+        map.on('click', function(e) {
+            var clickedLat = e.latlng.lat;
+            var clickedLng = e.latlng.lng;
+            
+            // Only show route if we have both origin and destination stations
+            if (originStation && destinationStation) {
+                showRoadRoute(
+                    originStation.coordinates.latitude,
+                    originStation.coordinates.longitude,
+                    destinationStation.coordinates.latitude,
+                    destinationStation.coordinates.longitude,
+                    clickedLat,
+                    clickedLng
+                );
+                
+                // Send message to React Native
+                window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'mapClick',
+                    coordinates: {
+                        latitude: clickedLat,
+                        longitude: clickedLng
+                    },
+                    hasRoute: true
+                }));
+            } else {
+                // Show popup with location info even without route
+                var popupContent = '<div class="station-popup">' +
+                    '<div class="station-name">📍 Location Info</div>' +
+                    '<div class="station-coords">Coordinates: ' + clickedLat.toFixed(6) + ', ' + clickedLng.toFixed(6) + '</div>' +
+                    '<div class="station-code">Select origin and destination to see road route</div>' +
+                '</div>';
+                
+                L.popup()
+                    .setLatLng([clickedLat, clickedLng])
+                    .setContent(popupContent)
+                    .openOn(map);
+                
+                // Send message to React Native
+                window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'mapClick',
+                    coordinates: {
+                        latitude: clickedLat,
+                        longitude: clickedLng
+                    },
+                    hasRoute: false
+                }));
+            }
+        });
+        
         // Handle map ready
         map.whenReady(function() {
             window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -267,6 +386,12 @@ export default function MetroMapView({
           if (onStationPress) {
             onStationPress(data.stationId);
           }
+        }
+      } else if (data.type === 'mapClick') {
+        // Handle map click - you can add additional logic here if needed
+        console.log('Map clicked at:', data.coordinates);
+        if (data.hasRoute) {
+          console.log('Road route displayed');
         }
       }
     } catch (error) {

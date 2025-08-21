@@ -3,124 +3,328 @@ import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, FlatList }
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
-import { MapPin, Calendar, Star, Info, ArrowRight, Share2, Heart } from "lucide-react-native";
+import { MapPin, Calendar, Star, Info, ArrowRight, Share2, Heart, Train, Clock, Users, Navigation } from "lucide-react-native";
 import Button from "@/components/Button";
 import { useSearchStore } from "@/store/searchStore";
 import Colors from "@/constants/colors";
+import MetroMapView from "@/components/MetroMapView";
+import { mrtLine6Stations, calculateFare } from "@/mocks/locations";
+import { MetroStation } from "@/types";
 
-// Extended destination details
-const destinationDetails = {
-  "dest1": {
-    id: "dest1",
-    city: "Paris",
-    country: "France",
-    description: "Paris, the capital of France, is a major European city and a global center for art, fashion, gastronomy, and culture. Its 19th-century cityscape is crisscrossed by wide boulevards and the River Seine. Beyond such landmarks as the Eiffel Tower and the 12th-century, Gothic Notre-Dame cathedral, the city is known for its cafe culture and designer boutiques along the Rue du Faubourg Saint-Honoré.",
-    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
+// Dhaka attractions data
+const dhakaAttractions = {
+  "dhaka-university-area": {
+    id: "dhaka-university-area",
+    name: "Dhaka University Area",
+    description: "The University of Dhaka, established in 1921, is the oldest university in Bangladesh and one of the most prestigious educational institutions in South Asia. The campus is home to beautiful colonial architecture, historic buildings, and vibrant student life. The area around the university is rich with cultural sites, libraries, and academic institutions that have shaped Bangladesh's intellectual landscape.",
+    image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&h=200&fit=crop",
     gallery: [
-      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1520939817895-060bdaf4fe1b?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1509041322357-8a3f9757a475?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80"
+      "https://images.unsplash.com/photo-1523050854058-8df90110c9d1?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop"
     ],
-    popularRoutes: ["London - Paris", "Amsterdam - Paris", "Berlin - Paris"],
+    nearestStation: "dhaka-university",
+    stationName: "Dhaka University",
+    distance: "0.2 km",
+    rating: 4.6,
+    category: "Educational & Cultural",
     attractions: [
-      "Eiffel Tower",
-      "Louvre Museum",
-      "Notre-Dame Cathedral",
-      "Champs-Élysées",
-      "Arc de Triomphe"
+      "Dhaka University Campus",
+      "Curzon Hall",
+      "Teacher-Student Centre (TSC)",
+      "Central Library",
+      "Aparajeyo Bangla",
+      "Raju Memorial Sculpture"
     ],
-    bestTimeToVisit: "April to June, September to October",
-    rating: 4.8,
-    weather: {
-      spring: "Cool to mild, 8-18°C",
-      summer: "Warm, 15-25°C",
-      autumn: "Mild to cool, 10-18°C",
-      winter: "Cold, 2-8°C"
+    bestTimeToVisit: "October to March (Winter Season)",
+    metroInfo: {
+      nearestStations: ["Dhaka University", "Shahbag"],
+      averageFare: "৳20-40",
+      walkingTime: "2-5 minutes"
     },
-    currency: "Euro (€)",
-    language: "French",
     travelTips: [
-      "Many Parisians speak English, but learning a few French phrases is appreciated",
-      "The Paris Metro is an efficient way to get around the city",
-      "Museums are often closed on Mondays or Tuesdays",
-      "Tipping is not required but appreciated for good service"
+      "The campus is most vibrant during academic sessions (March-July, September-December)",
+      "Visit TSC for authentic student culture and affordable food",
+      "Curzon Hall is a must-see for architecture enthusiasts",
+      "The area is pedestrian-friendly and safe during daytime"
     ]
   },
-  "dest2": {
-    id: "dest2",
-    city: "Tokyo",
-    country: "Japan",
-    description: "Tokyo, Japan's busy capital, mixes the ultramodern and the traditional, from neon-lit skyscrapers to historic temples. The opulent Meiji Shinto Shrine is known for its towering gate and surrounding woods. The Imperial Palace sits amid large public gardens. The city's many museums offer exhibits ranging from classical art (in the Tokyo National Museum) to a reconstructed kabuki theater (in the Edo-Tokyo Museum).",
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
+  "shahbag-area": {
+    id: "shahbag-area",
+    name: "Shahbag Cultural Hub",
+    description: "Shahbag is the cultural heart of Dhaka, home to the National Museum, Bangla Academy, and several important cultural institutions. This area has been significant in Bangladesh's history, serving as a center for intellectual discourse and cultural activities. The National Museum houses the country's largest collection of artifacts, while Bangla Academy promotes Bengali language and literature.",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
     gallery: [
-      "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80"
+      "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=200&fit=crop"
     ],
-    popularRoutes: ["New York - Tokyo", "Los Angeles - Tokyo", "Seoul - Tokyo"],
+    nearestStation: "shahbag",
+    stationName: "Shahbag",
+    distance: "0.1 km",
+    rating: 4.4,
+    category: "Museums & Culture",
     attractions: [
-      "Tokyo Skytree",
-      "Senso-ji Temple",
-      "Meiji Shrine",
-      "Shibuya Crossing",
-      "Tokyo Disneyland"
+      "Bangladesh National Museum",
+      "Shahbag Square",
+      "Bangla Academy",
+      "Ramna Park",
+      "Shishu Park",
+      "Institute of Fine Arts"
     ],
-    bestTimeToVisit: "March to May, September to November",
-    rating: 4.9,
-    weather: {
-      spring: "Mild, 10-20°C",
-      summer: "Hot and humid, 22-30°C",
-      autumn: "Mild, 15-23°C",
-      winter: "Cold, 2-10°C"
+    bestTimeToVisit: "November to February (Cool and Dry)",
+    metroInfo: {
+      nearestStations: ["Shahbag", "Dhaka University"],
+      averageFare: "৳20-60",
+      walkingTime: "1-3 minutes"
     },
-    currency: "Japanese Yen (¥)",
-    language: "Japanese",
     travelTips: [
-      "English is not widely spoken, so a translation app is helpful",
-      "The subway system is extensive but can be confusing for first-timers",
-      "Tipping is not customary and can even be considered rude",
-      "Bow when greeting people as a sign of respect"
+      "National Museum is closed on Sundays",
+      "Ramna Park is perfect for morning walks",
+      "Many cultural events happen at Bangla Academy",
+      "The area is well-connected and easily accessible"
+    ]
+  },
+  "secretariat-area": {
+    id: "secretariat-area",
+    name: "Government Quarter",
+    description: "The Bangladesh Secretariat area is the administrative heart of the country, housing the Prime Minister's Office, various ministries, and government departments. The area also includes the National Parliament House (Jatiya Sangsad Bhaban), designed by renowned architect Louis Kahn, which is considered one of the architectural masterpieces of the 20th century.",
+    image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=200&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=200&fit=crop"
+    ],
+    nearestStation: "bangladesh-secretariat",
+    stationName: "Bangladesh Secretariat",
+    distance: "0.3 km",
+    rating: 4.2,
+    category: "Government & Historic",
+    attractions: [
+      "Bangladesh Secretariat",
+      "National Parliament House",
+      "Supreme Court of Bangladesh",
+      "High Court Division",
+      "Prime Minister's Office",
+      "Sher-e-Bangla Nagar"
+    ],
+    bestTimeToVisit: "October to March (Cooler Weather)",
+    metroInfo: {
+      nearestStations: ["Bangladesh Secretariat", "Shahbag"],
+      averageFare: "৳40-80",
+      walkingTime: "3-8 minutes"
+    },
+    travelTips: [
+      "Security checks are common in this area",
+      "Parliament House tours require advance booking",
+      "Photography restrictions apply in many areas",
+      "Best visited during weekdays for full activity"
+    ]
+  },
+  "motijheel-area": {
+    id: "motijheel-area",
+    name: "Motijheel Business District",
+    description: "Motijheel is the primary financial and commercial district of Dhaka, often called the 'Wall Street of Bangladesh'. It houses the Bangladesh Bank (central bank), Dhaka Stock Exchange, and numerous commercial buildings. This area is the economic hub where major business decisions are made and is bustling with activity during business hours.",
+    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=200&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=200&fit=crop"
+    ],
+    nearestStation: "motijheel",
+    stationName: "Motijheel",
+    distance: "0.2 km",
+    rating: 4.3,
+    category: "Business & Shopping",
+    attractions: [
+      "Bangladesh Bank",
+      "Dhaka Stock Exchange",
+      "Motijheel Commercial Area",
+      "BTMC Bhaban",
+      "Shapla Chattar",
+      "Various Shopping Centers"
+    ],
+    bestTimeToVisit: "November to February (Business Season)",
+    metroInfo: {
+      nearestStations: ["Motijheel", "Bangladesh Secretariat"],
+      averageFare: "৳60-100",
+      walkingTime: "2-5 minutes"
+    },
+    travelTips: [
+      "Most active during business hours (9 AM - 6 PM)",
+      "Heavy traffic during rush hours",
+      "Many restaurants and cafes for business meetings",
+      "Metro is the best way to avoid traffic congestion"
+    ]
+  },
+  "farmgate-area": {
+    id: "farmgate-area",
+    name: "Farmgate Commercial Area",
+    description: "Farmgate is one of the busiest commercial areas in Dhaka, serving as a major transportation hub and shopping destination. The area is known for its vibrant street life, numerous shopping centers, restaurants, and its proximity to Tejgaon Industrial Area. It's a melting pot of commercial activities and urban life.",
+    image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=200&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=200&fit=crop"
+    ],
+    nearestStation: "farmgate",
+    stationName: "Farmgate",
+    distance: "0.1 km",
+    rating: 4.1,
+    category: "Commercial & Shopping",
+    attractions: [
+      "Farmgate Market",
+      "Tejgaon Industrial Area",
+      "Karwan Bazar",
+      "Various Shopping Malls",
+      "Street Food Scene",
+      "Transportation Hub"
+    ],
+    bestTimeToVisit: "Year-round (Commercial Area)",
+    metroInfo: {
+      nearestStations: ["Farmgate", "Karwan Bazar"],
+      averageFare: "৳40-80",
+      walkingTime: "1-3 minutes"
+    },
+    travelTips: [
+      "Very crowded during peak hours",
+      "Great for street food and local shopping",
+      "Multiple bus and transport connections",
+      "Metro provides relief from traffic congestion"
+    ]
+  },
+  "uttara-area": {
+    id: "uttara-area",
+    name: "Uttara Modern Town",
+    description: "Uttara is a planned residential area in northern Dhaka, known for its modern infrastructure, wide roads, and organized layout. It's one of the most developed areas in Dhaka with modern amenities, shopping centers, and residential complexes. The area represents the modern face of Dhaka with its contemporary architecture and urban planning.",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=200&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop",
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=200&fit=crop"
+    ],
+    nearestStation: "uttara-center",
+    stationName: "Uttara Center",
+    distance: "0.3 km",
+    rating: 4.5,
+    category: "Residential & Modern",
+    attractions: [
+      "Uttara Town Center",
+      "Modern Residential Areas",
+      "Uttara Lake",
+      "Shopping Centers",
+      "Parks and Recreation",
+      "Hazrat Shahjalal International Airport (nearby)"
+    ],
+    bestTimeToVisit: "October to March (Pleasant Weather)",
+    metroInfo: {
+      nearestStations: ["Uttara Center", "Uttara North", "Uttara South"],
+      averageFare: "৳20-100",
+      walkingTime: "3-10 minutes"
+    },
+    travelTips: [
+      "Well-planned area with modern amenities",
+      "Good for families and residential visits",
+      "Multiple metro stations serve the area",
+      "Close to the airport for travelers"
     ]
   }
 };
 
+// Metro station details
+const stationDetails = mrtLine6Stations.reduce((acc, station) => {
+  acc[station.id] = {
+    ...station,
+    description: `${station.name} is a metro station on the MRT Line-6 of Dhaka Metro Rail. This ${station.isOperational ? 'operational' : 'upcoming'} station serves the ${station.name} area and surrounding neighborhoods.`,
+    nearbyAttractions: getNearbyAttractions(station.id),
+    operatingHours: "06:00 AM - 10:00 PM",
+    frequency: "4-6 minutes during peak hours, 8-10 minutes during off-peak",
+    accessibility: station.facilities.includes("Elevator") && station.facilities.includes("Escalator"),
+    parkingAvailable: station.facilities.includes("Parking"),
+    commercialFacilities: station.facilities.filter(f => ["ATM", "Shopping", "Food Court"].includes(f))
+  };
+  return acc;
+}, {} as Record<string, any>);
+
+function getNearbyAttractions(stationId: string): string[] {
+  const attractionMap: Record<string, string[]> = {
+    "dhaka-university": ["Dhaka University", "Curzon Hall", "TSC", "Central Library"],
+    "shahbag": ["National Museum", "Bangla Academy", "Ramna Park", "Shishu Park"],
+    "bangladesh-secretariat": ["Parliament House", "Supreme Court", "Secretariat", "High Court"],
+    "motijheel": ["Bangladesh Bank", "Stock Exchange", "Commercial Buildings"],
+    "farmgate": ["Farmgate Market", "Tejgaon Industrial Area", "Karwan Bazar"],
+    "uttara-center": ["Uttara Town Center", "Modern Residential Areas", "Shopping Centers"],
+    "uttara-north": ["Residential Areas", "Parks", "Airport Access"],
+    "uttara-south": ["Commercial Areas", "Residential Complexes"],
+    "pallabi": ["Local Markets", "Residential Areas", "Community Centers"],
+    "mirpur-10": ["Mirpur Stadium", "Shopping Areas", "Residential Complexes"],
+    "mirpur-11": ["Local Markets", "Residential Areas"],
+    "kazipara": ["Local Community", "Residential Areas"],
+    "shewrapara": ["Local Markets", "Residential Areas"],
+    "agargaon": ["Government Offices", "Residential Areas"],
+    "bijoy-sarani": ["Commercial Areas", "Office Buildings"],
+    "kawran-bazar": ["Karwan Bazar Market", "Commercial Buildings"]
+  };
+  
+  return attractionMap[stationId] || ["Local Area", "Nearby Facilities"];
+}
+
 export default function DestinationDetailsScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, type } = useLocalSearchParams<{ id: string; type: string }>();
   const { setSearchParams } = useSearchStore();
   const [activeTab, setActiveTab] = useState("about");
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // Find the destination details
-  const destination = destinationDetails[id as keyof typeof destinationDetails] || destinationDetails.dest1;
+  // Determine if it's an attraction or station
+  const isAttraction = type === "attraction";
+  const isStation = type === "station";
+  
+  // Get the appropriate data
+  const attraction = isAttraction ? dhakaAttractions[id as keyof typeof dhakaAttractions] : null;
+  const station = isStation ? stationDetails[id] : null;
+  const data = attraction || station;
 
-  const handleSearchRoute = (route: string) => {
-    const [from, to] = route.split(" - ");
-    
-    // Set search params and navigate to search
-    setSearchParams({
-      from: { city: from, station: "", code: "" },
-      to: { city: to, station: "", code: "" }
-    });
+  if (!data) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>Details not found</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const handlePlanTrip = () => {
+    if (isAttraction && attraction) {
+      const nearestStation = mrtLine6Stations.find(s => s.id === attraction.nearestStation);
+      if (nearestStation) {
+        setSearchParams({
+          from: { city: "Uttara North", station: "Uttara North Metro Station", code: "UN" },
+          to: { city: nearestStation.name, station: `${nearestStation.name} Metro Station`, code: nearestStation.code }
+        });
+      }
+    } else if (isStation && station) {
+      setSearchParams({
+        from: { city: "Uttara North", station: "Uttara North Metro Station", code: "UN" },
+        to: { city: station.name, station: `${station.name} Metro Station`, code: station.code }
+      });
+    }
     
     router.push("/search");
   };
 
   const handleToggleFavorite = () => {
     setIsFavorite(!isFavorite);
-    // In a real app, this would save to user preferences
   };
 
   const handleShare = () => {
-    // In a real app, this would share the destination
-    console.log("Share destination:", destination.id);
+    console.log("Share:", data.name);
   };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Stack.Screen
         options={{
-          title: destination.city,
+          title: data.name,
           headerRight: () => (
             <View style={styles.headerButtons}>
               <TouchableOpacity 
@@ -146,7 +350,7 @@ export default function DestinationDetailsScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <Image
-          source={{ uri: destination.image }}
+          source={{ uri: data.image }}
           style={styles.heroImage}
           resizeMode="cover"
         />
@@ -154,15 +358,25 @@ export default function DestinationDetailsScreen() {
         <View style={styles.contentContainer}>
           <View style={styles.destinationHeader}>
             <View>
-              <Text style={styles.cityName}>{destination.city}</Text>
+              <Text style={styles.name}>{data.name}</Text>
               <View style={styles.locationContainer}>
-                <MapPin size={16} color={Colors.text.secondary} />
-                <Text style={styles.countryName}>{destination.country}</Text>
+                {isAttraction ? (
+                  <>
+                    <Train size={16} color={Colors.primary} />
+                    <Text style={styles.stationName}>{attraction?.stationName}</Text>
+                    <Text style={styles.distance}>• {attraction?.distance}</Text>
+                  </>
+                ) : (
+                  <>
+                    <MapPin size={16} color={Colors.primary} />
+                    <Text style={styles.stationInfo}>{station?.code} • {station?.line}</Text>
+                  </>
+                )}
               </View>
             </View>
             <View style={styles.ratingContainer}>
               <Star size={16} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingText}>{destination.rating}</Text>
+              <Text style={styles.ratingText}>{data.rating || "4.5"}</Text>
             </View>
           </View>
           
@@ -171,12 +385,7 @@ export default function DestinationDetailsScreen() {
               style={[styles.tab, activeTab === "about" && styles.activeTab]}
               onPress={() => setActiveTab("about")}
             >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "about" && styles.activeTabText,
-                ]}
-              >
+              <Text style={[styles.tabText, activeTab === "about" && styles.activeTabText]}>
                 About
               </Text>
             </TouchableOpacity>
@@ -184,59 +393,65 @@ export default function DestinationDetailsScreen() {
               style={[styles.tab, activeTab === "gallery" && styles.activeTab]}
               onPress={() => setActiveTab("gallery")}
             >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "gallery" && styles.activeTabText,
-                ]}
-              >
+              <Text style={[styles.tabText, activeTab === "gallery" && styles.activeTabText]}>
                 Gallery
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tab, activeTab === "travel" && styles.activeTab]}
-              onPress={() => setActiveTab("travel")}
+              style={[styles.tab, activeTab === "info" && styles.activeTab]}
+              onPress={() => setActiveTab("info")}
             >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "travel" && styles.activeTabText,
-                ]}
-              >
-                Travel Info
+              <Text style={[styles.tabText, activeTab === "info" && styles.activeTabText]}>
+                {isAttraction ? "Travel Info" : "Station Info"}
               </Text>
             </TouchableOpacity>
           </View>
           
           {activeTab === "about" && (
             <View style={styles.tabContent}>
-              <Text style={styles.description}>{destination.description}</Text>
+              <Text style={styles.description}>{data.description}</Text>
               
-              <Text style={styles.sectionTitle}>Top Attractions</Text>
-              {destination.attractions.map((attraction, index) => (
+              <Text style={styles.sectionTitle}>
+                {isAttraction ? "Top Attractions" : "Nearby Attractions"}
+              </Text>
+              {(attraction?.attractions || station?.nearbyAttractions || []).map((item: string, index: number) => (
                 <View key={index} style={styles.attractionItem}>
                   <View style={styles.bulletPoint} />
-                  <Text style={styles.attractionText}>{attraction}</Text>
+                  <Text style={styles.attractionText}>{item}</Text>
                 </View>
               ))}
               
-              <Text style={styles.sectionTitle}>Best Time to Visit</Text>
-              <View style={styles.infoItem}>
-                <Calendar size={16} color={Colors.primary} style={styles.infoIcon} />
-                <Text style={styles.infoText}>{destination.bestTimeToVisit}</Text>
-              </View>
-              
-              <Text style={styles.sectionTitle}>Popular Routes</Text>
-              {destination.popularRoutes.map((route, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.routeItem}
-                  onPress={() => handleSearchRoute(route)}
-                >
-                  <Text style={styles.routeText}>{route}</Text>
-                  <ArrowRight size={16} color={Colors.primary} />
-                </TouchableOpacity>
-              ))}
+              {isAttraction && (
+                <>
+                  <Text style={styles.sectionTitle}>Best Time to Visit</Text>
+                  <View style={styles.infoItem}>
+                    <Calendar size={16} color={Colors.primary} style={styles.infoIcon} />
+                    <Text style={styles.infoText}>{attraction?.bestTimeToVisit}</Text>
+                  </View>
+                  
+                  <Text style={styles.sectionTitle}>Metro Access</Text>
+                  <View style={styles.metroInfoCard}>
+                    <View style={styles.metroInfoItem}>
+                      <Train size={16} color={Colors.primary} />
+                      <Text style={styles.metroInfoText}>
+                        Nearest: {attraction?.stationName} ({attraction?.distance})
+                      </Text>
+                    </View>
+                    <View style={styles.metroInfoItem}>
+                      <Clock size={16} color={Colors.primary} />
+                      <Text style={styles.metroInfoText}>
+                        Walking: {attraction?.metroInfo?.walkingTime}
+                      </Text>
+                    </View>
+                    <View style={styles.metroInfoItem}>
+                      <Users size={16} color={Colors.primary} />
+                      <Text style={styles.metroInfoText}>
+                        Fare: {attraction?.metroInfo?.averageFare}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
           )}
           
@@ -244,7 +459,7 @@ export default function DestinationDetailsScreen() {
             <View style={styles.tabContent}>
               <Text style={styles.sectionTitle}>Photo Gallery</Text>
               <FlatList
-                data={[destination.image, ...destination.gallery]}
+                data={[data.image, ...(data.gallery || [])]}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 renderItem={({ item }) => (
@@ -262,47 +477,62 @@ export default function DestinationDetailsScreen() {
             </View>
           )}
           
-          {activeTab === "travel" && (
+          {activeTab === "info" && (
             <View style={styles.tabContent}>
-              <Text style={styles.sectionTitle}>Weather</Text>
-              <View style={styles.weatherContainer}>
-                <View style={styles.weatherItem}>
-                  <Text style={styles.weatherSeason}>Spring</Text>
-                  <Text style={styles.weatherDescription}>{destination.weather.spring}</Text>
-                </View>
-                <View style={styles.weatherItem}>
-                  <Text style={styles.weatherSeason}>Summer</Text>
-                  <Text style={styles.weatherDescription}>{destination.weather.summer}</Text>
-                </View>
-                <View style={styles.weatherItem}>
-                  <Text style={styles.weatherSeason}>Autumn</Text>
-                  <Text style={styles.weatherDescription}>{destination.weather.autumn}</Text>
-                </View>
-                <View style={styles.weatherItem}>
-                  <Text style={styles.weatherSeason}>Winter</Text>
-                  <Text style={styles.weatherDescription}>{destination.weather.winter}</Text>
-                </View>
-              </View>
-              
-              <Text style={styles.sectionTitle}>Practical Information</Text>
-              <View style={styles.infoGrid}>
-                <View style={styles.infoGridItem}>
-                  <Text style={styles.infoLabel}>Currency</Text>
-                  <Text style={styles.infoValue}>{destination.currency}</Text>
-                </View>
-                <View style={styles.infoGridItem}>
-                  <Text style={styles.infoLabel}>Language</Text>
-                  <Text style={styles.infoValue}>{destination.language}</Text>
-                </View>
-              </View>
-              
-              <Text style={styles.sectionTitle}>Travel Tips</Text>
-              {destination.travelTips.map((tip, index) => (
-                <View key={index} style={styles.tipItem}>
-                  <Info size={16} color={Colors.primary} style={styles.tipIcon} />
-                  <Text style={styles.tipText}>{tip}</Text>
-                </View>
-              ))}
+              {isAttraction ? (
+                <>
+                  <Text style={styles.sectionTitle}>Travel Tips</Text>
+                  {attraction?.travelTips?.map((tip: string, index: number) => (
+                    <View key={index} style={styles.tipItem}>
+                      <Info size={16} color={Colors.primary} style={styles.tipIcon} />
+                      <Text style={styles.tipText}>{tip}</Text>
+                    </View>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.sectionTitle}>Station Information</Text>
+                  <View style={styles.stationInfoGrid}>
+                    <View style={styles.stationInfoItem}>
+                      <Text style={styles.infoLabel}>Operating Hours</Text>
+                      <Text style={styles.infoValue}>{station?.operatingHours}</Text>
+                    </View>
+                    <View style={styles.stationInfoItem}>
+                      <Text style={styles.infoLabel}>Frequency</Text>
+                      <Text style={styles.infoValue}>{station?.frequency}</Text>
+                    </View>
+                    <View style={styles.stationInfoItem}>
+                      <Text style={styles.infoLabel}>Accessibility</Text>
+                      <Text style={styles.infoValue}>{station?.accessibility ? "Yes" : "Limited"}</Text>
+                    </View>
+                    <View style={styles.stationInfoItem}>
+                      <Text style={styles.infoLabel}>Parking</Text>
+                      <Text style={styles.infoValue}>{station?.parkingAvailable ? "Available" : "Not Available"}</Text>
+                    </View>
+                  </View>
+                  
+                  <Text style={styles.sectionTitle}>Facilities</Text>
+                  <View style={styles.facilitiesGrid}>
+                    {station?.facilities?.map((facility: string, index: number) => (
+                      <View key={index} style={styles.facilityChip}>
+                        <Text style={styles.facilityText}>{facility}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+            </View>
+          )}
+
+          {/* Metro Map for stations */}
+          {isStation && (
+            <View style={styles.mapSection}>
+              <Text style={styles.sectionTitle}>Station Location</Text>
+              <MetroMapView
+                height={250}
+                currentStationId={station?.id}
+                showUserLocation={false}
+              />
             </View>
           )}
         </View>
@@ -310,9 +540,9 @@ export default function DestinationDetailsScreen() {
       
       <View style={styles.footer}>
         <Button
-          title="Find Trips to Paris"
-          onPress={() => handleSearchRoute(`London - ${destination.city}`)}
-          style={styles.findTripsButton}
+          title={isAttraction ? `Plan Trip to ${attraction?.stationName}` : `Plan Trip to ${station?.name}`}
+          onPress={handlePlanTrip}
+          style={styles.planTripButton}
         />
       </View>
     </SafeAreaView>
@@ -343,7 +573,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 16,
   },
-  cityName: {
+  name: {
     fontSize: 24,
     fontWeight: "700",
     color: Colors.text.primary,
@@ -353,10 +583,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  countryName: {
+  stationName: {
+    fontSize: 16,
+    color: Colors.primary,
+    marginLeft: 4,
+    fontWeight: "600",
+  },
+  distance: {
     fontSize: 16,
     color: Colors.text.secondary,
     marginLeft: 4,
+  },
+  stationInfo: {
+    fontSize: 16,
+    color: Colors.primary,
+    marginLeft: 4,
+    fontWeight: "600",
   },
   ratingContainer: {
     flexDirection: "row",
@@ -439,19 +681,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text.primary,
   },
-  routeItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  metroInfoCard: {
     backgroundColor: Colors.secondary,
-    padding: 12,
+    padding: 16,
     borderRadius: 8,
+    marginBottom: 16,
+  },
+  metroInfoItem: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
-  routeText: {
-    fontSize: 16,
+  metroInfoText: {
+    fontSize: 14,
     color: Colors.text.primary,
-    fontWeight: "600",
+    marginLeft: 8,
   },
   galleryList: {
     paddingBottom: 16,
@@ -465,50 +709,6 @@ const styles = StyleSheet.create({
     width: 200,
     height: 150,
     borderRadius: 8,
-  },
-  weatherContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  weatherItem: {
-    width: "48%",
-    backgroundColor: Colors.secondary,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  weatherSeason: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: Colors.text.primary,
-    marginBottom: 4,
-  },
-  weatherDescription: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-  },
-  infoGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  infoGridItem: {
-    width: "48%",
-    backgroundColor: Colors.secondary,
-    padding: 12,
-    borderRadius: 8,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.text.primary,
   },
   tipItem: {
     flexDirection: "row",
@@ -525,13 +725,57 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 20,
   },
+  stationInfoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  stationInfoItem: {
+    width: "48%",
+    backgroundColor: Colors.secondary,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text.primary,
+  },
+  facilitiesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 24,
+  },
+  facilityChip: {
+    backgroundColor: Colors.primary + "20",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  facilityText: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: "600",
+  },
+  mapSection: {
+    marginTop: 16,
+  },
   footer: {
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.background,
   },
-  findTripsButton: {
+  planTripButton: {
     width: "100%",
   },
 });

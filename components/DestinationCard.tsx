@@ -49,7 +49,7 @@ export default function DestinationCard({
                   color="#fff" 
                 />
               </View>
-              <Text style={styles.price}>${price}</Text>
+              <Text style={styles.price}>৳{price}</Text>
             </View>
           </View>
         </LinearGradient>

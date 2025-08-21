@@ -180,7 +180,7 @@ export default function LoyaltyProgramScreen() {
             <View style={styles.earnContent}>
               <Text style={styles.earnTitle}>Book a Trip</Text>
               <Text style={styles.earnDescription}>
-                Earn 1 point for every $1 spent on bookings
+                Earn 1 point for every ৳1 spent on bookings
               </Text>
             </View>
           </View>
