@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, ScrollView, Dimensions } from "react-native";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, ScrollView, Dimensions, Animated } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
-import { MapPin, Train, Clock, Star, Navigation, Users, Zap, Shield, Info, ArrowRight } from "lucide-react-native";
+import { MapPin, Train, Clock, Star, Navigation, Users, Zap, Shield, Info, ArrowRight, ChevronDown, ChevronUp } from "lucide-react-native";
 import SearchBar from "@/components/SearchBar";
 import { useSearchStore } from "@/store/searchStore";
 import Colors from "@/constants/colors";
@@ -107,6 +107,20 @@ export default function ExploreDestinations() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("attractions");
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [isMapMinimized, setIsMapMinimized] = useState(false);
+  const mapHeight = new Animated.Value(300);
+
+  const toggleMapSize = () => {
+    const toValue = isMapMinimized ? 300 : 120;
+    
+    Animated.timing(mapHeight, {
+      toValue,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+    
+    setIsMapMinimized(!isMapMinimized);
+  };
 
   const filteredAttractions = dhakaAttractions.filter(attraction =>
     attraction.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -251,92 +265,106 @@ export default function ExploreDestinations() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Stack.Screen options={{ title: "Explore Dhaka Metro" }} />
       
-      <View style={styles.header}>
-        <Text style={styles.title}>Explore Dhaka Metro</Text>
-        <Text style={styles.subtitle}>Discover the city through our metro system</Text>
-      </View>
-      
-      <View style={styles.searchContainer}>
-        <SearchBar
-          placeholder="Search attractions or stations..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
+      <ScrollView 
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Explore Dhaka Metro</Text>
+          <Text style={styles.subtitle}>Discover the city through our metro system</Text>
+        </View>
+        
+        <View style={styles.searchContainer}>
+          <SearchBar
+            placeholder="Search attractions or stations..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
-      {/* Metro Stats */}
-      <View style={styles.statsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.statCard}>
-            <Train size={20} color={Colors.primary} />
-            <Text style={styles.statNumber}>{metroStats.operationalStations}</Text>
-            <Text style={styles.statLabel}>Stations</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Navigation size={20} color={Colors.primary} />
-            <Text style={styles.statNumber}>{metroStats.totalLength}</Text>
-            <Text style={styles.statLabel}>Total Length</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Users size={20} color={Colors.primary} />
-            <Text style={styles.statNumber}>{metroStats.dailyPassengers}</Text>
-            <Text style={styles.statLabel}>Daily Passengers</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Clock size={20} color={Colors.primary} />
-            <Text style={styles.statNumber}>{metroStats.frequency}</Text>
-            <Text style={styles.statLabel}>Frequency</Text>
-          </View>
-        </ScrollView>
-      </View>
+        {/* Metro Stats */}
+        <View style={styles.statsContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.statCard}>
+              <Train size={20} color={Colors.primary} />
+              <Text style={styles.statNumber}>{metroStats.operationalStations}</Text>
+              <Text style={styles.statLabel}>Stations</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Navigation size={20} color={Colors.primary} />
+              <Text style={styles.statNumber}>{metroStats.totalLength}</Text>
+              <Text style={styles.statLabel}>Total Length</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Users size={20} color={Colors.primary} />
+              <Text style={styles.statNumber}>{metroStats.dailyPassengers}</Text>
+              <Text style={styles.statLabel}>Daily Passengers</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Clock size={20} color={Colors.primary} />
+              <Text style={styles.statNumber}>{metroStats.frequency}</Text>
+              <Text style={styles.statLabel}>Frequency</Text>
+            </View>
+          </ScrollView>
+        </View>
 
-      {/* Metro Map */}
-      <View style={styles.mapContainer}>
-        <MetroMapView
-          height={200}
-          onStationPress={handleStationPress}
-          showUserLocation={true}
-        />
-      </View>
-      
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "attractions" && styles.activeTab]}
-          onPress={() => setActiveTab("attractions")}
-        >
-          <Text style={[styles.tabText, activeTab === "attractions" && styles.activeTabText]}>
-            Attractions ({dhakaAttractions.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "stations" && styles.activeTab]}
-          onPress={() => setActiveTab("stations")}
-        >
-          <Text style={[styles.tabText, activeTab === "stations" && styles.activeTabText]}>
-            Stations ({metroStats.operationalStations})
-          </Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Content */}
-      {activeTab === "attractions" ? (
-        <FlatList
-          data={filteredAttractions}
-          renderItem={renderAttractionCard}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <FlatList
-          data={filteredStations}
-          renderItem={renderStationCard}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+        {/* Scrollable Metro Map */}
+        <Animated.View style={[styles.scrollableMapContainer, { height: mapHeight }]}>
+          <MetroMapView
+            height={isMapMinimized ? 120 : 300}
+            onStationPress={handleStationPress}
+            showUserLocation={true}
+          />
+          <TouchableOpacity 
+            style={styles.mapToggleButton}
+            onPress={toggleMapSize}
+          >
+            {isMapMinimized ? (
+              <ChevronUp size={20} color="#fff" />
+            ) : (
+              <ChevronDown size={20} color="#fff" />
+            )}
+          </TouchableOpacity>
+        </Animated.View>
+        
+        {/* Tabs */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "attractions" && styles.activeTab]}
+            onPress={() => setActiveTab("attractions")}
+          >
+            <Text style={[styles.tabText, activeTab === "attractions" && styles.activeTabText]}>
+              Attractions ({dhakaAttractions.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "stations" && styles.activeTab]}
+            onPress={() => setActiveTab("stations")}
+          >
+            <Text style={[styles.tabText, activeTab === "stations" && styles.activeTabText]}>
+              Stations ({metroStats.operationalStations})
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Content */}
+        <View style={styles.contentContainer}>
+          {activeTab === "attractions" ? (
+            filteredAttractions.map((item) => (
+              <View key={item.id}>
+                {renderAttractionCard({ item })}
+              </View>
+            ))
+          ) : (
+            filteredStations.map((item) => (
+              <View key={item.id}>
+                {renderStationCard({ item })}
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -345,6 +373,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 16,
   },
   header: {
     padding: 16,
@@ -392,9 +426,32 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textAlign: "center",
   },
-  mapContainer: {
+  scrollableMapContainer: {
     marginHorizontal: 16,
     marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  mapToggleButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: Colors.primary,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
   },
   tabContainer: {
     flexDirection: "row",
@@ -551,7 +608,7 @@ const styles = StyleSheet.create({
   stationInfoContainer: {
     flex: 1,
   },
-  stationName: {
+  stationCardName: {
     fontSize: 16,
     fontWeight: "700",
     color: Colors.text.primary,

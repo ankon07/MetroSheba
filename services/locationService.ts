@@ -9,6 +9,30 @@ export interface UserLocation {
   nearestStation?: MetroStation;
 }
 
+export interface RouteInfo {
+  distance: number; // in kilometers
+  duration: number; // in minutes
+  steps: RouteStep[];
+  roadUpdates?: RoadUpdate[];
+}
+
+export interface RouteStep {
+  instruction: string;
+  distance: number; // in kilometers
+  duration: number; // in minutes
+  coordinates: { latitude: number; longitude: number }[];
+}
+
+export interface RoadUpdate {
+  id: string;
+  type: 'traffic' | 'construction' | 'accident' | 'closure';
+  severity: 'low' | 'medium' | 'high';
+  message: string;
+  location: string;
+  coordinates: { latitude: number; longitude: number };
+  timestamp: string;
+}
+
 export class LocationService {
   private static instance: LocationService;
   private currentLocation: UserLocation | null = null;
@@ -123,6 +147,194 @@ export class LocationService {
       return 20; // Default minimum fare
     }
     return calculateFare(this.currentLocation.nearestStation, toStation);
+  }
+
+  async findNearestStationWithRoute(userLocation?: UserLocation): Promise<{
+    station: MetroStation;
+    distance: number;
+    route: RouteInfo;
+  } | null> {
+    try {
+      const location = userLocation || await this.getCurrentLocation();
+      if (!location) return null;
+
+      const nearestStation = this.findNearestStation(location.latitude, location.longitude);
+      if (!nearestStation || !nearestStation.coordinates) return null;
+
+      const distance = this.calculateDistance(
+        location.latitude,
+        location.longitude,
+        nearestStation.coordinates.latitude,
+        nearestStation.coordinates.longitude
+      );
+
+      const route = await this.getRouteToStation(location, nearestStation);
+      if (!route) return null;
+
+      return {
+        station: nearestStation,
+        distance,
+        route
+      };
+    } catch (error) {
+      console.error('Error finding nearest station with route:', error);
+      return null;
+    }
+  }
+
+  async getRouteToStation(userLocation: UserLocation, station: MetroStation): Promise<RouteInfo | null> {
+    try {
+      if (!station.coordinates) return null;
+
+      const distance = this.calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        station.coordinates.latitude,
+        station.coordinates.longitude
+      );
+
+      // Estimate walking time (average walking speed: 5 km/h)
+      const duration = Math.round((distance / 5) * 60); // Convert to minutes
+
+      // Create route steps
+      const steps: RouteStep[] = [
+        {
+          instruction: `Head ${this.getDirection(userLocation, station.coordinates)} towards ${station.name} Metro Station`,
+          distance: distance * 0.3,
+          duration: duration * 0.3,
+          coordinates: [
+            userLocation,
+            {
+              latitude: userLocation.latitude + (station.coordinates.latitude - userLocation.latitude) * 0.3,
+              longitude: userLocation.longitude + (station.coordinates.longitude - userLocation.longitude) * 0.3,
+            }
+          ]
+        },
+        {
+          instruction: 'Continue straight on the main road',
+          distance: distance * 0.4,
+          duration: duration * 0.4,
+          coordinates: [
+            {
+              latitude: userLocation.latitude + (station.coordinates.latitude - userLocation.latitude) * 0.3,
+              longitude: userLocation.longitude + (station.coordinates.longitude - userLocation.longitude) * 0.3,
+            },
+            {
+              latitude: userLocation.latitude + (station.coordinates.latitude - userLocation.latitude) * 0.7,
+              longitude: userLocation.longitude + (station.coordinates.longitude - userLocation.longitude) * 0.7,
+            }
+          ]
+        },
+        {
+          instruction: `Arrive at ${station.name} Metro Station`,
+          distance: distance * 0.3,
+          duration: duration * 0.3,
+          coordinates: [
+            {
+              latitude: userLocation.latitude + (station.coordinates.latitude - userLocation.latitude) * 0.7,
+              longitude: userLocation.longitude + (station.coordinates.longitude - userLocation.longitude) * 0.7,
+            },
+            station.coordinates
+          ]
+        }
+      ];
+
+      // Get road updates for the route
+      const roadUpdates = await this.getRoadUpdates(userLocation, station.coordinates);
+
+      return {
+        distance,
+        duration,
+        steps,
+        roadUpdates
+      };
+    } catch (error) {
+      console.error('Error getting route to station:', error);
+      return null;
+    }
+  }
+
+  private getDirection(from: { latitude: number; longitude: number }, to: { latitude: number; longitude: number }): string {
+    const latDiff = to.latitude - from.latitude;
+    const lngDiff = to.longitude - from.longitude;
+
+    if (Math.abs(latDiff) > Math.abs(lngDiff)) {
+      return latDiff > 0 ? 'north' : 'south';
+    } else {
+      return lngDiff > 0 ? 'east' : 'west';
+    }
+  }
+
+  async getRoadUpdates(from: { latitude: number; longitude: number }, to: { latitude: number; longitude: number }): Promise<RoadUpdate[]> {
+    // Simulate road updates - in a real app, this would fetch from a traffic API
+    const updates: RoadUpdate[] = [];
+    
+    // Generate some sample road updates based on common Dhaka traffic patterns
+    const currentTime = new Date();
+    const hour = currentTime.getHours();
+    
+    // Peak hour traffic updates
+    if ((hour >= 8 && hour <= 10) || (hour >= 17 && hour <= 20)) {
+      updates.push({
+        id: 'traffic-1',
+        type: 'traffic',
+        severity: 'high',
+        message: 'Heavy traffic expected during peak hours. Consider alternative routes.',
+        location: 'Main roads in Dhaka',
+        coordinates: {
+          latitude: (from.latitude + to.latitude) / 2,
+          longitude: (from.longitude + to.longitude) / 2
+        },
+        timestamp: currentTime.toISOString()
+      });
+    }
+
+    // Construction updates for major areas
+    if (this.isNearMajorArea(from) || this.isNearMajorArea(to)) {
+      updates.push({
+        id: 'construction-1',
+        type: 'construction',
+        severity: 'medium',
+        message: 'Ongoing metro construction may cause delays. Allow extra time.',
+        location: 'Metro construction zones',
+        coordinates: to,
+        timestamp: currentTime.toISOString()
+      });
+    }
+
+    // Weather-based updates
+    if (this.isRainyWeather()) {
+      updates.push({
+        id: 'weather-1',
+        type: 'traffic',
+        severity: 'medium',
+        message: 'Rainy weather may cause slower traffic. Drive carefully.',
+        location: 'City-wide',
+        coordinates: from,
+        timestamp: currentTime.toISOString()
+      });
+    }
+
+    return updates;
+  }
+
+  private isNearMajorArea(location: { latitude: number; longitude: number }): boolean {
+    const majorAreas = [
+      { name: 'Farmgate', lat: 23.7581470, lng: 90.3896469 },
+      { name: 'Shahbag', lat: 23.7400837, lng: 90.3960061 },
+      { name: 'Motijheel', lat: 23.7280587, lng: 90.4190551 },
+      { name: 'Uttara', lat: 23.8683699, lng: 90.3671672 }
+    ];
+
+    return majorAreas.some(area => 
+      this.calculateDistance(location.latitude, location.longitude, area.lat, area.lng) < 2 // Within 2km
+    );
+  }
+
+  private isRainyWeather(): boolean {
+    // Simulate weather check - in a real app, this would use a weather API
+    // For demo, randomly return true 30% of the time
+    return Math.random() < 0.3;
   }
 
   getPopularRoutesFromCurrentLocation(): Array<{

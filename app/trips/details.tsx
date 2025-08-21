@@ -8,6 +8,7 @@ import {
   Dimensions,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,8 +17,10 @@ import colors from '../../constants/colors';
 import Button from '../../components/Button';
 import InteractiveRouteMap from '../../components/InteractiveRouteMap';
 import MetroMapView from '../../components/MetroMapView';
+import NavigationMapView from '../../components/NavigationMapView';
 import { metroTrips, getMetroTripsForRoute } from '../../mocks/trips';
 import { mrtLine6Stations, calculateFare } from '../../mocks/locations';
+import { locationService } from '../../services/locationService';
 
 const { width } = Dimensions.get('window');
 
@@ -40,6 +43,7 @@ const TripDetails = () => {
   const [selectedView, setSelectedView] = useState<'overview' | 'cars' | 'tickets'>('overview');
   const [currentTrip, setCurrentTrip] = useState<any>(null);
   const [tickets, setTickets] = useState<TicketType[]>([]);
+  const [showNavigationModal, setShowNavigationModal] = useState(false);
 
   // Load trip data based on ID
   useEffect(() => {
@@ -212,10 +216,10 @@ const TripDetails = () => {
     }
   };
 
-  const handleAction = (action: string) => {
+  const handleAction = async (action: string) => {
     switch (action) {
       case 'go':
-        Alert.alert('Navigation', 'Opening navigation to station...');
+        await handleGoNavigation();
         break;
       case 'buy':
         setSelectedView('tickets');
@@ -229,6 +233,38 @@ const TripDetails = () => {
       case 'continue':
         router.push('/booking/payment');
         break;
+    }
+  };
+
+  const handleGoNavigation = async () => {
+    try {
+      // Check if location permission is granted
+      const hasPermission = await locationService.requestLocationPermission();
+      
+      if (!hasPermission) {
+        Alert.alert(
+          'Location Permission Required',
+          'To navigate to the nearest metro station, we need access to your location. Please grant location permission in your device settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => {
+              // In a real app, you would open device settings
+              Alert.alert('Please enable location permission in your device settings');
+            }}
+          ]
+        );
+        return;
+      }
+
+      // Show the navigation modal
+      setShowNavigationModal(true);
+    } catch (error) {
+      console.error('Error handling navigation:', error);
+      Alert.alert(
+        'Navigation Error',
+        'Unable to start navigation. Please check your location settings and try again.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
@@ -524,6 +560,19 @@ const TripDetails = () => {
       {selectedView === 'overview' && renderOverview()}
       {selectedView === 'cars' && renderTrainCars()}
       {selectedView === 'tickets' && renderTickets()}
+      
+      {/* Navigation Modal */}
+      <Modal
+        visible={showNavigationModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowNavigationModal(false)}
+      >
+        <NavigationMapView
+          onClose={() => setShowNavigationModal(false)}
+          height={Dimensions.get('window').height - 100}
+        />
+      </Modal>
     </View>
   );
 };

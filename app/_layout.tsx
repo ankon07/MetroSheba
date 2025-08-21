@@ -212,6 +212,34 @@ function RootLayoutNav() {
             title: "Contact Support",
           }} 
         />
+        <Stack.Screen 
+          name="auth/login" 
+          options={{ 
+            title: "Login",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="auth/register" 
+          options={{ 
+            title: "Register",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="auth/pin-login" 
+          options={{ 
+            title: "PIN Login",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="welcome" 
+          options={{ 
+            title: "Welcome",
+            headerShown: false,
+          }} 
+        />
       </Stack>
     </>
   );

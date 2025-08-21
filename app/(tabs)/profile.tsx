@@ -19,6 +19,8 @@ export default function ProfileScreen() {
       // Clear cache on logout
       const { CacheManager } = await import('@/utils/cacheManager');
       await CacheManager.clear();
+      // Redirect to welcome screen
+      router.replace('/welcome' as any);
     } catch (error) {
       console.error('Logout failed:', error);
     }

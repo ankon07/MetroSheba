@@ -31,6 +31,9 @@ const initialSettings: AppSettings = {
   marketingCommunications: false,
   darkMode: false,
   fontSize: "medium",
+  language: "en",
+  preferredPayment: "cash",
+  accessibilityMode: false,
 };
 
 export const useUserStore = create<UserState>()(
@@ -131,10 +134,9 @@ export const useUserStore = create<UserState>()(
   )
 );
 
-// For demo purposes, auto-login with mock user
+// Initialize user store without auto-login
 export const initializeUser = () => {
-  const { isLoggedIn, login } = useUserStore.getState();
-  if (!isLoggedIn) {
-    login(mockUser);
-  }
+  // Check if user was previously logged in from storage
+  // The persist middleware will handle restoring the state
+  console.log('User store initialized');
 };
