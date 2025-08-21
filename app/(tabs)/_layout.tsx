@@ -2,10 +2,12 @@ import React from "react";
 import { Tabs } from "expo-router";
 import { Home, Search, Ticket, User, Settings as SettingsIcon } from "lucide-react-native";
 import Colors from "@/constants/colors";
+import AuthGuard from "@/components/AuthGuard";
 
 export default function TabLayout() {
   return (
-    <Tabs
+    <AuthGuard>
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.tabBar.active,
         tabBarInactiveTintColor: Colors.tabBar.inactive,
@@ -55,6 +57,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <SettingsIcon size={size} color={color} />,
         }}
       />
-    </Tabs>
+      </Tabs>
+    </AuthGuard>
   );
 }

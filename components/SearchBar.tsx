@@ -44,10 +44,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.surface,
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 44,
+    borderWidth: 1,
+    borderColor: Colors.primary,
   },
   searchIcon: {
     marginRight: 8,

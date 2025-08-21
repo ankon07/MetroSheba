@@ -11,8 +11,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      // Redirect to welcome screen if not logged in
-      router.replace('/welcome' as any);
+      // Redirect to login screen if not logged in
+      router.replace('/auth/pin-login' as any);
     }
   }, [isLoggedIn]);
 

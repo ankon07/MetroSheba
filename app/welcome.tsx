@@ -54,12 +54,6 @@ export default function WelcomeScreen() {
           <Text style={styles.registerButtonText}>Create Account</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={() => router.replace('/(tabs)')}
-        >
-          <Text style={styles.skipButtonText}>Continue as Guest</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

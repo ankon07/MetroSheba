@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, ScrollView, FlatList } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "@/components/SearchBar";
 import TransportationTypeSelector from "@/components/TransportationTypeSelector";
 import SectionHeader from "@/components/SectionHeader";
-import UpcomingTrainCard from "@/components/UpcomingTrainCard";
+import ContinuousScrollingTrains from "@/components/ContinuousScrollingTrains";
 import DestinationCard from "@/components/DestinationCard";
 import AnimatedCard from "@/components/AnimatedCard";
 import LoadingOverlay from "@/components/LoadingOverlay";
@@ -144,18 +144,9 @@ export default function HomeScreen() {
         </AnimatedCard>
         
         <AnimatedCard delay={800}>
-          <FlatList
-            data={upcoming}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <UpcomingTrainCard
-                train={item}
-                onPress={() => handleTrainPress(item.id)}
-              />
-            )}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.trainsList}
+          <ContinuousScrollingTrains
+            trains={upcoming}
+            onTrainPress={handleTrainPress}
           />
         </AnimatedCard>
         
@@ -209,9 +200,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text.secondary,
     marginBottom: 16,
-  },
-  trainsList: {
-    paddingBottom: 16,
   },
   destinationsContainer: {
     flexDirection: "row",

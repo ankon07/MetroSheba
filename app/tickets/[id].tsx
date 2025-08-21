@@ -6,7 +6,7 @@ import { Stack } from "expo-router";
 import { ArrowLeft, Share2, Download, Train, Clock, MapPin, QrCode } from "lucide-react-native";
 import Button from "@/components/Button";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
-import { mockTrips } from "@/mocks/trips";
+import { mockTrips, metroTrips } from "@/mocks/trips";
 import { useUserStore } from "@/store/userStore";
 import Colors from "@/constants/colors";
 
@@ -17,7 +17,39 @@ export default function TicketDetailsScreen() {
   
   // Find the trip in user trips first, then fall back to mock data
   const userTrip = trips.find((t) => t.id === id);
-  const mockTrip = mockTrips.find((t) => t.id === id);
+  let mockTrip = mockTrips.find((t) => t.id === id);
+  
+  // If not found in mockTrips, search in metroTrips and convert to Trip format
+  if (!mockTrip && id) {
+    const metroTrip = metroTrips.find((t) => t.id === id);
+    if (metroTrip) {
+      // Convert MetroTrip to Trip format for compatibility
+      mockTrip = {
+        id: metroTrip.id,
+        from: { 
+          city: metroTrip.from.name, 
+          station: `${metroTrip.from.name} Metro Station`, 
+          code: metroTrip.from.code 
+        },
+        to: { 
+          city: metroTrip.to.name, 
+          station: `${metroTrip.to.name} Metro Station`, 
+          code: metroTrip.to.code 
+        },
+        departureDate: metroTrip.departureDate,
+        departureTime: metroTrip.departureTime,
+        arrivalDate: metroTrip.arrivalDate,
+        arrivalTime: metroTrip.arrivalTime,
+        duration: metroTrip.duration,
+        price: metroTrip.price,
+        transportationType: "train" as const,
+        company: "Dhaka Mass Transit Company Limited",
+        class: "Standard",
+        bookingRef: metroTrip.trainNumber
+      };
+    }
+  }
+  
   const trip = userTrip || mockTrip;
   
   if (!trip || !trip.bookingRef) {

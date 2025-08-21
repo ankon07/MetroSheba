@@ -5,6 +5,7 @@ import { AppSettings, PaymentMethod, Trip, User } from "@/types";
 import { mockPaymentMethods, mockUser } from "@/mocks/user";
 import { USE_FIREBASE } from "@/config/featureFlags";
 import * as UsersService from "@/services/usersService";
+import BiometricService from "@/services/biometricService";
 
 interface UserState {
   user: User | null;
@@ -13,6 +14,7 @@ interface UserState {
   paymentMethods: PaymentMethod[];
   settings: AppSettings;
   login: (userData: User) => Promise<void>;
+  loginWithBiometric: () => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   addTrip: (trip: Trip) => void;
@@ -21,6 +23,9 @@ interface UserState {
   removePaymentMethod: (methodId: string) => Promise<void>;
   setDefaultPaymentMethod: (methodId: string) => Promise<void>;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
+  enableBiometricAuth: () => Promise<boolean>;
+  disableBiometricAuth: () => Promise<boolean>;
+  isBiometricEnabled: () => Promise<boolean>;
 }
 
 const initialSettings: AppSettings = {
@@ -57,6 +62,53 @@ export const useUserStore = create<UserState>()(
             // For demo purposes, we'll load mock data
             paymentMethods: mockPaymentMethods,
           });
+        }
+      },
+
+      loginWithBiometric: async () => {
+        try {
+          const isEnabled = await BiometricService.isBiometricEnabled();
+          if (!isEnabled) {
+            return false;
+          }
+
+          const result = await BiometricService.authenticate('Use Face ID to sign in quickly');
+          if (result.success) {
+            const userId = await BiometricService.getBiometricUserId();
+            if (userId) {
+              // For demo purposes, create a mock user with the stored ID
+              const userData = {
+                id: userId,
+                firstName: 'User',
+                lastName: 'Name',
+                email: 'user@example.com',
+                phone: '+8801315206061',
+                nationality: 'Bangladeshi',
+                trips: 0,
+                countries: 1,
+                miles: 0,
+                memberSince: new Date().toISOString().split('T')[0],
+                membershipLevel: 'Standard' as const,
+              };
+
+              if (USE_FIREBASE) {
+                await UsersService.loginOrBootstrap(userData);
+                const methods = await UsersService.getUserPaymentMethods(userData.id);
+                set({ user: userData, isLoggedIn: true, paymentMethods: methods });
+              } else {
+                set({ 
+                  user: userData, 
+                  isLoggedIn: true,
+                  paymentMethods: mockPaymentMethods,
+                });
+              }
+              return true;
+            }
+          }
+          return false;
+        } catch (error) {
+          console.error('Biometric login error:', error);
+          return false;
         }
       },
       
@@ -126,6 +178,41 @@ export const useUserStore = create<UserState>()(
           settings: { ...state.settings, ...newSettings },
         }));
       },
+
+      enableBiometricAuth: async () => {
+        const user = get().user;
+        if (!user) return false;
+        
+        try {
+          const isAvailable = await BiometricService.isAvailable();
+          if (!isAvailable) return false;
+
+          // Simply enable biometric auth without requiring authentication
+          // The face enrollment process handles the security verification
+          return await BiometricService.enableBiometricAuth(user.id);
+        } catch (error) {
+          console.error('Error enabling biometric auth:', error);
+          return false;
+        }
+      },
+
+      disableBiometricAuth: async () => {
+        try {
+          return await BiometricService.disableBiometricAuth();
+        } catch (error) {
+          console.error('Error disabling biometric auth:', error);
+          return false;
+        }
+      },
+
+      isBiometricEnabled: async () => {
+        try {
+          return await BiometricService.isBiometricEnabled();
+        } catch (error) {
+          console.error('Error checking biometric status:', error);
+          return false;
+        }
+      },
     }),
     {
       name: "travel-ease-user-storage",
@@ -138,5 +225,6 @@ export const useUserStore = create<UserState>()(
 export const initializeUser = () => {
   // Check if user was previously logged in from storage
   // The persist middleware will handle restoring the state
-  console.log('User store initialized');
+  // No automatic login - users must authenticate manually
+  console.log('User store initialized - no auto-login');
 };

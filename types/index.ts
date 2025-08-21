@@ -102,6 +102,21 @@ export interface User {
   miles: number;
   memberSince: string;
   membershipLevel: "Standard" | "Gold" | "Platinum";
+  kycStatus?: "pending" | "verified" | "rejected" | "not_started";
+  kycDocuments?: {
+    nidFront?: string;
+    nidBack?: string;
+    passport?: string;
+    drivingLicense?: string;
+  };
+  dateOfBirth?: string;
+  address?: {
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
 }
 
 export interface PaymentMethod {

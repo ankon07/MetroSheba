@@ -23,7 +23,7 @@ export default function TransportationTypeSelector({
         <TransportationIcon
           type="train"
           size={32}
-          color={Colors.primary}
+          color={Colors.text.light}
         />
         <View style={styles.metroInfo}>
           <Text style={styles.metroTitle}>Dhaka Metro Rail</Text>
@@ -41,11 +41,19 @@ const styles = StyleSheet.create({
   metroHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.primary,
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: Colors.accent,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   metroInfo: {
     marginLeft: 12,
@@ -54,11 +62,12 @@ const styles = StyleSheet.create({
   metroTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.primary,
+    color: Colors.text.light,
     marginBottom: 2,
   },
   metroSubtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: Colors.text.light,
+    opacity: 0.9,
   },
 });

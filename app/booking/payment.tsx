@@ -6,7 +6,7 @@ import { CreditCard, Check, Smartphone, Wallet, ArrowLeft } from "lucide-react-n
 import Button from "@/components/Button";
 import BookingSteps from "@/components/BookingSteps";
 import AnimatedCard from "@/components/AnimatedCard";
-import { mockTrips } from "@/mocks/trips";
+import { mockTrips, metroTrips } from "@/mocks/trips";
 import { useUserStore } from "@/store/userStore";
 import Colors from "@/constants/colors";
 
@@ -17,8 +17,39 @@ export default function PaymentScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { paymentMethods, addTrip, removePaymentMethod } = useUserStore();
   
-  // Find the trip in our mock data
-  const trip = mockTrips.find((t) => t.id === tripId);
+  // Find the trip in both mock data arrays
+  let trip = mockTrips.find((t) => t.id === tripId);
+  
+  // If not found in mockTrips, search in metroTrips and convert to Trip format
+  if (!trip && tripId) {
+    const metroTrip = metroTrips.find((t) => t.id === tripId);
+    if (metroTrip) {
+      // Convert MetroTrip to Trip format for compatibility
+      trip = {
+        id: metroTrip.id,
+        from: { 
+          city: metroTrip.from.name, 
+          station: `${metroTrip.from.name} Metro Station`, 
+          code: metroTrip.from.code 
+        },
+        to: { 
+          city: metroTrip.to.name, 
+          station: `${metroTrip.to.name} Metro Station`, 
+          code: metroTrip.to.code 
+        },
+        departureDate: metroTrip.departureDate,
+        departureTime: metroTrip.departureTime,
+        arrivalDate: metroTrip.arrivalDate,
+        arrivalTime: metroTrip.arrivalTime,
+        duration: metroTrip.duration,
+        price: metroTrip.price,
+        transportationType: "train" as const,
+        company: "Dhaka Mass Transit Company Limited",
+        class: "Standard",
+        bookingRef: metroTrip.trainNumber
+      };
+    }
+  }
   
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("bkash");
   const [isProcessing, setIsProcessing] = useState(false);

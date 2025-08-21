@@ -70,6 +70,52 @@ const TripDetails = () => {
             quantity: 0 
           },
         ]);
+      } else {
+        // Fallback: if no trip found, use default fare calculation
+        const fromStation = mrtLine6Stations.find(s => s.name === 'Uttara North');
+        const toStation = mrtLine6Stations.find(s => s.name === 'Motijheel');
+        if (fromStation && toStation) {
+          const fare = calculateFare(fromStation, toStation);
+          setTickets([
+            { 
+              id: '1', 
+              name: 'CityTicket Off-Peak', 
+              price: fare, 
+              description: 'Valid until 4 AM tomorrow', 
+              quantity: 1 
+            },
+            { 
+              id: '2', 
+              name: 'Family', 
+              price: Math.max(fare * 0.7, 20), 
+              description: 'Family discount available', 
+              quantity: 0 
+            },
+          ]);
+        }
+      }
+    } else {
+      // Initialize with default tickets when no ID is provided
+      const fromStation = mrtLine6Stations.find(s => s.name === 'Uttara North');
+      const toStation = mrtLine6Stations.find(s => s.name === 'Motijheel');
+      if (fromStation && toStation) {
+        const fare = calculateFare(fromStation, toStation);
+        setTickets([
+          { 
+            id: '1', 
+            name: 'CityTicket Off-Peak', 
+            price: fare, 
+            description: 'Valid until 4 AM tomorrow', 
+            quantity: 1 
+          },
+          { 
+            id: '2', 
+            name: 'Family', 
+            price: Math.max(fare * 0.7, 20), 
+            description: 'Family discount available', 
+            quantity: 0 
+          },
+        ]);
       }
     }
   }, [id]);
@@ -231,7 +277,10 @@ const TripDetails = () => {
         addToCalendar();
         break;
       case 'continue':
-        router.push('/booking/payment');
+        router.push({
+          pathname: '/booking/payment',
+          params: { tripId: tripData.id }
+        });
         break;
     }
   };
@@ -370,7 +419,7 @@ const TripDetails = () => {
         <View style={styles.ticketOption}>
           <View style={styles.ticketInfo}>
             <Text style={styles.ticketName}>Regular Ticket Off-Peak</Text>
-            <Text style={styles.ticketPrice}>৳25.00</Text>
+            <Text style={styles.ticketPrice}>৳{tickets.length > 0 ? tickets[0].price.toFixed(2) : '100.00'}</Text>
           </View>
           <TouchableOpacity style={styles.infoButton}>
             <Ionicons name="information-circle-outline" size={20} color={colors.primary} />

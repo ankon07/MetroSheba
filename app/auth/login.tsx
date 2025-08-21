@@ -10,9 +10,10 @@ import {
   Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
+import { ArrowLeft, Eye, EyeOff, Scan } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useUserStore } from '@/store/userStore';
+import BiometricService from '@/services/biometricService';
 
 const { width } = Dimensions.get('window');
 
@@ -21,7 +22,89 @@ export default function LoginScreen() {
   const [pin, setPin] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useUserStore();
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [biometricType, setBiometricType] = useState('');
+  const { login, loginWithBiometric, isBiometricEnabled } = useUserStore();
+
+  useEffect(() => {
+    checkBiometricAvailability();
+  }, []);
+
+  const checkBiometricAvailability = async () => {
+    try {
+      console.log('Checking biometric availability...');
+      const available = await BiometricService.isAvailable();
+      console.log('Biometric available:', available);
+      
+      // In development mode, always show Face ID option
+      const shouldShowBiometric = available || __DEV__;
+      setBiometricAvailable(shouldShowBiometric);
+
+      if (shouldShowBiometric) {
+        const enabled = await isBiometricEnabled();
+        console.log('Biometric enabled:', enabled);
+        setBiometricEnabled(enabled);
+
+        const types = await BiometricService.getSupportedAuthenticationTypes();
+        const typeName = BiometricService.getBiometricTypeName(types);
+        console.log('Biometric type:', typeName);
+        setBiometricType(typeName || 'Face ID');
+      }
+    } catch (error) {
+      console.error('Error checking biometric availability:', error);
+      // In development mode, still show Face ID even if there's an error
+      if (__DEV__) {
+        setBiometricAvailable(true);
+        setBiometricType('Face ID');
+      }
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    if (!biometricEnabled) {
+      Alert.alert('Face ID Not Set Up', 'Please set up Face ID in your device settings first.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const success = await loginWithBiometric();
+      if (success) {
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('Authentication Failed', 'Face ID authentication was cancelled or failed.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Face ID authentication failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetupFaceID = async () => {
+    Alert.alert(
+      `Set up ${biometricType}`,
+      `To use ${biometricType} for quick login, you need to first log in with your PIN and then set up face authentication in your profile settings.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Continue',
+          onPress: () => {
+            // Focus on the PIN input to encourage user to complete login first
+            Alert.alert(
+              'Complete Login First',
+              'Please enter your phone number and PIN to log in, then you can set up Face ID in your profile settings.',
+              [{ text: 'OK' }]
+            );
+          },
+        },
+      ]
+    );
+  };
 
   const handleLogin = async () => {
     if (!phoneNumber.trim()) {
@@ -56,6 +139,35 @@ export default function LoginScreen() {
       };
 
       await login(userData);
+      
+      // Check if biometric authentication is available and not yet enabled
+      if (biometricAvailable && !biometricEnabled) {
+        Alert.alert(
+          'Enable Face ID?',
+          `Would you like to enable ${biometricType} for quick sign in next time?`,
+          [
+            {
+              text: 'Not Now',
+              style: 'cancel',
+            },
+            {
+              text: 'Enable',
+              onPress: async () => {
+                try {
+                  const { enableBiometricAuth } = useUserStore.getState();
+                  const success = await enableBiometricAuth();
+                  if (success) {
+                    setBiometricEnabled(true);
+                  }
+                } catch (error) {
+                  console.error('Error enabling biometric auth:', error);
+                }
+              },
+            },
+          ]
+        );
+      }
+      
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert('Error', 'Login failed. Please try again.');
@@ -150,6 +262,32 @@ export default function LoginScreen() {
         <TouchableOpacity style={styles.forgotPin}>
           <Text style={styles.forgotPinText}>Forgot PIN? Reset PIN</Text>
         </TouchableOpacity>
+
+        {/* Biometric Login Button */}
+        {biometricAvailable && (
+          <>
+            <TouchableOpacity
+              style={[styles.biometricButton, isLoading && styles.biometricButtonDisabled]}
+              onPress={biometricEnabled ? handleBiometricLogin : handleSetupFaceID}
+              disabled={isLoading}
+            >
+              <Scan size={24} color={Colors.primary} />
+              <Text style={styles.biometricButtonText}>
+                {biometricEnabled 
+                  ? `Sign in with ${biometricType}`
+                  : `Set up ${biometricType} Login`
+                }
+              </Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          </>
+        )}
 
         {/* Login Button */}
         <TouchableOpacity
@@ -309,5 +447,40 @@ const styles = StyleSheet.create({
   registerLink: {
     color: Colors.primary,
     fontWeight: '500',
+  },
+  biometricButton: {
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    borderRadius: 8,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    backgroundColor: 'white',
+  },
+  biometricButtonDisabled: {
+    opacity: 0.6,
+  },
+  biometricButtonText: {
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#666',
+    fontSize: 14,
   },
 });

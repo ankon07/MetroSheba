@@ -11,7 +11,7 @@ import OfflineBanner from "@/components/OfflineBanner";
 import { useOfflineHandler } from "@/hooks/useOfflineHandler";
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)",
+  initialRouteName: "welcome",
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -32,7 +32,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
-      // Initialize mock user for demo
+      // Initialize user store without auto-login
       initializeUser();
       // Seed Firebase once so the app shows real data
       (async () => {
