@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight, CreditCard, User, Award, LogOut, Edit, HelpCircle, Settings as SettingsIcon } from "lucide-react-native";
 import ProfileStats from "@/components/ProfileStats";
+import LocationCard from "@/components/LocationCard";
 import { useUserStore } from "@/store/userStore";
 import { USE_FIREBASE } from '@/config/featureFlags';
 import * as UsersService from '@/services/usersService';
@@ -73,6 +74,10 @@ export default function ProfileScreen() {
           countries={user.countries}
           miles={user.miles}
         />
+
+        <View style={styles.locationSection}>
+          <LocationCard />
+        </View>
 
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>My Account</Text>
@@ -256,6 +261,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: Colors.primary,
     marginLeft: 4,
+  },
+  locationSection: {
+    paddingHorizontal: 16,
   },
   menuSection: {
     padding: 16,

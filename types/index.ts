@@ -175,3 +175,43 @@ export interface UpcomingTrain {
   delay?: number;
   crowdLevel: "low" | "medium" | "high";
 }
+
+export interface LostFoundItem {
+  id: string;
+  title: string;
+  description: string;
+  category: LostFoundCategory;
+  location: string;
+  dateReported: string;
+  status: "lost" | "found" | "claimed";
+  reporterName: string;
+  contactInfo: string;
+  reportId: string;
+  image?: string;
+  additionalDetails?: {
+    [key: string]: string;
+  };
+}
+
+export type LostFoundCategory = 
+  | "Electronics" 
+  | "Bags & Luggage" 
+  | "Clothing" 
+  | "Documents" 
+  | "Jewelry" 
+  | "Keys" 
+  | "Wallet" 
+  | "Phone" 
+  | "Other";
+
+export interface LostFoundReport {
+  title: string;
+  description: string;
+  category: LostFoundCategory;
+  location: string;
+  date: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail?: string;
+  type: "lost" | "found";
+}

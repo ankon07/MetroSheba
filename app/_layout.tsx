@@ -213,6 +213,33 @@ function RootLayoutNav() {
           }} 
         />
         <Stack.Screen 
+          name="lost-found/index" 
+          options={{ 
+            title: "Lost & Found",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="lost-found/details" 
+          options={{ 
+            title: "Item Details",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="lost-found/report" 
+          options={{ 
+            title: "Report Item",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="tickets/[id]" 
+          options={{ 
+            title: "Ticket Details",
+          }} 
+        />
+        <Stack.Screen 
           name="auth/login" 
           options={{ 
             title: "Login",

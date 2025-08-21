@@ -6,6 +6,7 @@ import { mockPaymentMethods, mockUser } from "@/mocks/user";
 import { USE_FIREBASE } from "@/config/featureFlags";
 import * as UsersService from "@/services/usersService";
 import BiometricService from "@/services/biometricService";
+import { locationService, UserLocation } from "@/services/locationService";
 
 interface UserState {
   user: User | null;
@@ -13,6 +14,8 @@ interface UserState {
   trips: Trip[];
   paymentMethods: PaymentMethod[];
   settings: AppSettings;
+  userLocation: UserLocation | null;
+  locationPermissionGranted: boolean;
   login: (userData: User) => Promise<void>;
   loginWithBiometric: () => Promise<boolean>;
   logout: () => void;
@@ -26,6 +29,9 @@ interface UserState {
   enableBiometricAuth: () => Promise<boolean>;
   disableBiometricAuth: () => Promise<boolean>;
   isBiometricEnabled: () => Promise<boolean>;
+  requestLocationPermission: () => Promise<boolean>;
+  updateUserLocation: () => Promise<void>;
+  clearUserLocation: () => void;
 }
 
 const initialSettings: AppSettings = {
@@ -49,6 +55,8 @@ export const useUserStore = create<UserState>()(
       trips: [],
       paymentMethods: [],
       settings: initialSettings,
+      userLocation: null,
+      locationPermissionGranted: false,
       
       login: async (userData) => {
         if (USE_FIREBASE) {
@@ -212,6 +220,32 @@ export const useUserStore = create<UserState>()(
           console.error('Error checking biometric status:', error);
           return false;
         }
+      },
+
+      requestLocationPermission: async () => {
+        try {
+          const hasPermission = await locationService.requestLocationPermission();
+          set({ locationPermissionGranted: hasPermission });
+          return hasPermission;
+        } catch (error) {
+          console.error('Error requesting location permission:', error);
+          set({ locationPermissionGranted: false });
+          return false;
+        }
+      },
+
+      updateUserLocation: async () => {
+        try {
+          const location = await locationService.getCurrentLocation();
+          set({ userLocation: location });
+        } catch (error) {
+          console.error('Error updating user location:', error);
+          set({ userLocation: null });
+        }
+      },
+
+      clearUserLocation: () => {
+        set({ userLocation: null, locationPermissionGranted: false });
       },
     }),
     {

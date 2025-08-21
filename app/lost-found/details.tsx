@@ -1,54 +1,93 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Package, MapPin, Calendar, Phone, Mail, User, Share2 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
+import { LostFoundItem } from '@/types';
 
-const mockLostItems = [
+const mockLostItems: LostFoundItem[] = [
   {
     id: '1',
-    title: 'Black Leather Wallet',
-    description: 'Black leather wallet with ID cards and some cash. Has a small scratch on the front and contains a driving license with the name "John Doe". Also has several credit cards and approximately 2000 BDT in cash.',
-    category: 'Wallet',
-    location: 'Farmgate Station',
-    date: '2024-01-15',
+    title: 'Black iPhone 14',
+    description: 'Black iPhone 14 with a blue case. Lost on the Red Line between Uttara and Motijheel. Screen has a small crack on the top right corner. Phone is locked with Face ID. Case has a small sticker with a cat design.',
+    category: 'Electronics',
+    location: 'Uttara North Station',
+    dateReported: '2024-01-15',
     status: 'lost',
-    contactInfo: '+880 1712-345678',
-    reportedBy: 'John Doe',
+    reporterName: 'John Doe',
+    contactInfo: 'john.doe@email.com',
     reportId: 'LF-2024-001',
     additionalDetails: {
       color: 'Black',
-      brand: 'Unknown',
-      size: 'Standard wallet size',
-      lastSeen: 'Near the ticket counter',
-      reward: '500 BDT'
+      brand: 'Apple',
+      model: 'iPhone 14',
+      condition: 'Good with minor screen crack',
+      lastSeen: 'Platform 1, near bench',
+      reward: '1000 BDT'
     }
   },
   {
     id: '2',
-    title: 'iPhone 14 Pro',
-    description: 'Space Gray iPhone 14 Pro with blue case. Screen has a small crack on the top right corner. Phone is locked with Face ID. Case has a small sticker with a cat design.',
-    category: 'Phone',
-    location: 'Uttara North Station',
-    date: '2024-01-14',
+    title: 'Brown Leather Wallet',
+    description: 'Brown leather wallet containing ID cards and some cash. Lost near the ticket counter. Has a small scratch on the front and contains a driving license with the name "John Smith". Also has several credit cards and approximately 2000 BDT in cash.',
+    category: 'Wallet',
+    location: 'Motijheel Station',
+    dateReported: '2024-01-14',
     status: 'found',
-    contactInfo: 'station.uttara@dmtcl.gov.bd',
-    reportedBy: 'Station Staff',
+    reporterName: 'Station Staff',
+    contactInfo: 'motijheel.station@dmtcl.gov.bd',
     reportId: 'LF-2024-002',
     additionalDetails: {
-      color: 'Space Gray',
-      brand: 'Apple',
-      model: 'iPhone 14 Pro',
-      condition: 'Good with minor screen crack',
-      foundLocation: 'Platform 2, near bench'
+      color: 'Brown',
+      brand: 'Unknown',
+      size: 'Standard wallet size',
+      foundLocation: 'Near ticket counter',
+      condition: 'Good condition'
+    }
+  },
+  {
+    id: '3',
+    title: 'Blue Backpack',
+    description: 'Blue Jansport backpack with laptop and books. Has a small tear on the front pocket.',
+    category: 'Bags & Luggage',
+    location: 'Shahbagh Station',
+    dateReported: '2024-01-13',
+    status: 'lost',
+    reporterName: 'Sarah Ahmed',
+    contactInfo: '01712345678',
+    reportId: 'LF-2024-003',
+    additionalDetails: {
+      color: 'Blue',
+      brand: 'Jansport',
+      size: 'Medium',
+      lastSeen: 'Platform 2',
+      reward: '500 BDT'
+    }
+  },
+  {
+    id: '4',
+    title: 'Gold Wedding Ring',
+    description: 'Gold wedding ring with small diamond. Engraved with initials "M&R".',
+    category: 'Jewelry',
+    location: 'Farmgate Station',
+    dateReported: '2024-01-12',
+    status: 'found',
+    reporterName: 'Cleaning Staff',
+    contactInfo: 'farmgate.station@dmtcl.gov.bd',
+    reportId: 'LF-2024-004',
+    additionalDetails: {
+      material: 'Gold',
+      size: 'Size 7',
+      engraving: 'M&R',
+      foundLocation: 'Platform restroom',
+      condition: 'Excellent'
     }
   }
 ];
 
 export default function LostFoundDetailsScreen() {
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   
   const item = mockLostItems.find(item => item.id === id);
@@ -56,6 +95,17 @@ export default function LostFoundDetailsScreen() {
   if (!item) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color={Colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Item Details</Text>
+          <View style={styles.placeholder} />
+        </View>
+        
         <View style={styles.errorContainer}>
           <Package size={48} color={Colors.text.muted} />
           <Text style={styles.errorTitle}>Item not found</Text>
@@ -120,24 +170,21 @@ export default function LostFoundDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Stack.Screen
-        options={{
-          headerTitle: 'Item Details',
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()}>
-              <ArrowLeft size={24} color={Colors.primary} />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <TouchableOpacity onPress={handleShare}>
-              <Share2 size={24} color={Colors.primary} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color={Colors.text.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Item Details</Text>
+        <TouchableOpacity onPress={handleShare}>
+          <Share2 size={24} color={Colors.primary} />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
+        <View style={styles.itemHeader}>
           <View style={styles.statusContainer}>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
               <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
@@ -180,7 +227,7 @@ export default function LostFoundDetailsScreen() {
                 <View style={styles.detailValueContainer}>
                   <Calendar size={16} color={Colors.text.secondary} />
                   <Text style={styles.detailValue}>
-                    {new Date(item.date).toLocaleDateString('en-US', {
+                    {new Date(item.dateReported).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
@@ -194,7 +241,7 @@ export default function LostFoundDetailsScreen() {
                 <Text style={styles.detailLabel}>Reported By</Text>
                 <View style={styles.detailValueContainer}>
                   <User size={16} color={Colors.text.secondary} />
-                  <Text style={styles.detailValue}>{item.reportedBy}</Text>
+                  <Text style={styles.detailValue}>{item.reporterName}</Text>
                 </View>
               </View>
             </View>
@@ -249,7 +296,7 @@ export default function LostFoundDetailsScreen() {
               <Button
                 title="Claim This Item"
                 onPress={handleClaim}
-                style={[styles.claimButton, { backgroundColor: Colors.success }]}
+                style={StyleSheet.flatten([styles.claimButton, { backgroundColor: Colors.success }])}
               />
             </View>
           )}
@@ -282,7 +329,27 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  placeholder: {
+    width: 32,
+  },
+  itemHeader: {
+    padding: 20,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
@@ -319,7 +386,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
+    padding: 20,
   },
   section: {
     marginBottom: 24,
@@ -492,8 +559,5 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     textAlign: 'center',
     marginBottom: 24,
-  },
-  backButton: {
-    width: 200,
   },
 });

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Bell, Mail, DollarSign, Lightbulb, MessageSquare, Moon, Type, Package, Scan } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { Href } from "expo-router";
 import SettingsItem from "@/components/SettingsItem";
 import { useUserStore } from "@/store/userStore";
 import Colors from "@/constants/colors";
@@ -221,7 +222,7 @@ export default function SettingsScreen() {
             title="Lost & Found"
             description="Report or search for lost items"
             icon={<Package size={20} color={Colors.warning} />}
-            onPress={() => router.push("/lost-found/index")}
+            onPress={() => router.push("/lost-found/index" as Href)}
           />
         </View>
 

@@ -1,85 +1,123 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  RefreshControl,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
-import { ArrowLeft, Search, Plus, Package, Clock, MapPin, Phone, Mail } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { Search, Plus, Package, Clock, MapPin, Phone, Mail, ArrowLeft } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
+import { LostFoundItem, LostFoundCategory } from '@/types';
 
-interface LostItem {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  location: string;
-  date: string;
-  status: 'lost' | 'found' | 'claimed';
-  contactInfo: string;
-  reportedBy: string;
-}
-
-const mockLostItems: LostItem[] = [
-  {
-    id: '1',
-    title: 'Black Leather Wallet',
-    description: 'Black leather wallet with ID cards and some cash',
-    category: 'Wallet',
-    location: 'Farmgate Station',
-    date: '2024-01-15',
-    status: 'lost',
-    contactInfo: '+880 1712-345678',
-    reportedBy: 'John Doe'
-  },
-  {
-    id: '2',
-    title: 'iPhone 14 Pro',
-    description: 'Space Gray iPhone 14 Pro with blue case',
-    category: 'Phone',
-    location: 'Uttara North Station',
-    date: '2024-01-14',
-    status: 'found',
-    contactInfo: 'station.uttara@dmtcl.gov.bd',
-    reportedBy: 'Station Staff'
-  },
-  {
-    id: '3',
-    title: 'Red Backpack',
-    description: 'Red Nike backpack with laptop and books',
-    category: 'Bag',
-    location: 'Shahbagh Station',
-    date: '2024-01-13',
-    status: 'found',
-    contactInfo: 'station.shahbagh@dmtcl.gov.bd',
-    reportedBy: 'Station Staff'
-  },
-  {
-    id: '4',
-    title: 'Gold Ring',
-    description: 'Gold wedding ring with small diamond',
-    category: 'Jewelry',
-    location: 'Motijheel Station',
-    date: '2024-01-12',
-    status: 'lost',
-    contactInfo: '+880 1987-654321',
-    reportedBy: 'Sarah Ahmed'
-  }
+const categories: (LostFoundCategory | 'All')[] = [
+  'All',
+  'Electronics',
+  'Bags & Luggage',
+  'Clothing',
+  'Documents',
+  'Jewelry',
+  'Keys',
+  'Wallet',
+  'Phone',
+  'Other'
 ];
 
-const categories = ['All', 'Phone', 'Wallet', 'Bag', 'Jewelry', 'Documents', 'Electronics', 'Clothing', 'Other'];
-
-export default function LostFoundScreen() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+export default function LostAndFoundScreen() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<LostFoundCategory | 'All'>('All');
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'lost' | 'found'>('all');
+  const [lostItems, setLostItems] = useState<LostFoundItem[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const filteredItems = mockLostItems.filter(item => {
+  // Mock data - in a real app, this would come from an API
+  const mockLostItems: LostFoundItem[] = [
+    {
+      id: '1',
+      title: 'Black iPhone 14',
+      description: 'Black iPhone 14 with a blue case. Lost on the Red Line between Uttara and Motijheel.',
+      category: 'Electronics',
+      location: 'Uttara North Station',
+      dateReported: '2024-01-15',
+      status: 'lost',
+      reporterName: 'John Doe',
+      contactInfo: 'john.doe@email.com',
+      reportId: 'LF-2024-001',
+    },
+    {
+      id: '2',
+      title: 'Brown Leather Wallet',
+      description: 'Brown leather wallet containing ID cards and some cash. Lost near the ticket counter.',
+      category: 'Wallet',
+      location: 'Motijheel Station',
+      dateReported: '2024-01-14',
+      status: 'found',
+      reporterName: 'Station Staff',
+      contactInfo: 'motijheel.station@dmtcl.gov.bd',
+      reportId: 'LF-2024-002',
+    },
+    {
+      id: '3',
+      title: 'Blue Backpack',
+      description: 'Blue Jansport backpack with laptop and books. Has a small tear on the front pocket.',
+      category: 'Bags & Luggage',
+      location: 'Shahbagh Station',
+      dateReported: '2024-01-13',
+      status: 'lost',
+      reporterName: 'Sarah Ahmed',
+      contactInfo: '01712345678',
+      reportId: 'LF-2024-003',
+    },
+    {
+      id: '4',
+      title: 'Gold Wedding Ring',
+      description: 'Gold wedding ring with small diamond. Engraved with initials "M&R".',
+      category: 'Jewelry',
+      location: 'Farmgate Station',
+      dateReported: '2024-01-12',
+      status: 'found',
+      reporterName: 'Cleaning Staff',
+      contactInfo: 'farmgate.station@dmtcl.gov.bd',
+      reportId: 'LF-2024-004',
+    },
+  ];
+
+  useEffect(() => {
+    loadLostItems();
+  }, []);
+
+  const loadLostItems = async () => {
+    setLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLostItems(mockLostItems);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load lost items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadLostItems();
+    setRefreshing(false);
+  };
+
+  const filteredItems = lostItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.location.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
     const matchesStatus = selectedStatus === 'all' || item.status === selectedStatus;
-    
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
@@ -101,9 +139,9 @@ export default function LostFoundScreen() {
     }
   };
 
-  const renderLostItem = (item: LostItem) => (
-    <TouchableOpacity 
-      key={item.id} 
+  const renderLostItem = (item: LostFoundItem) => (
+    <TouchableOpacity
+      key={item.id}
       style={styles.itemCard}
       onPress={() => router.push(`/lost-found/details?id=${item.id}`)}
     >
@@ -130,7 +168,9 @@ export default function LostFoundScreen() {
         </View>
         <View style={styles.detailItem}>
           <Clock size={14} color={Colors.text.secondary} />
-          <Text style={styles.detailText}>{new Date(item.date).toLocaleDateString()}</Text>
+          <Text style={styles.detailText}>
+            {new Date(item.dateReported).toLocaleDateString()}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -138,25 +178,31 @@ export default function LostFoundScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Stack.Screen
-        options={{
-          headerTitle: 'Lost & Found',
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()}>
-              <ArrowLeft size={24} color={Colors.primary} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color={Colors.text.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Lost & Found</Text>
+        <View style={styles.placeholder} />
+      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Lost & Found</Text>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View style={styles.introSection}>
           <Text style={styles.subtitle}>
             Report lost items or search for found items in the Dhaka Metro Rail system
           </Text>
         </View>
 
+        {/* Search Bar */}
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
             <Search size={20} color={Colors.text.secondary} />
@@ -170,17 +216,18 @@ export default function LostFoundScreen() {
           </View>
         </View>
 
+        {/* Status Filter */}
         <View style={styles.filtersContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.filterRow}>
-              {['all', 'lost', 'found'].map((status) => (
+              {(['all', 'lost', 'found'] as const).map((status) => (
                 <TouchableOpacity
                   key={status}
                   style={[
                     styles.filterChip,
                     selectedStatus === status && styles.filterChipActive
                   ]}
-                  onPress={() => setSelectedStatus(status as 'all' | 'lost' | 'found')}
+                  onPress={() => setSelectedStatus(status)}
                 >
                   <Text style={[
                     styles.filterChipText,
@@ -194,6 +241,7 @@ export default function LostFoundScreen() {
           </ScrollView>
         </View>
 
+        {/* Category Filter */}
         <View style={styles.categoriesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.categoryRow}>
@@ -218,27 +266,33 @@ export default function LostFoundScreen() {
           </ScrollView>
         </View>
 
+        {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <Button
             title="Report Lost Item"
             onPress={() => router.push('/lost-found/report')}
-            style={[styles.actionButton, { backgroundColor: Colors.error }]}
+            style={StyleSheet.flatten([styles.actionButton, { backgroundColor: Colors.error }])}
             icon={<Package size={20} color={Colors.text.light} />}
           />
           <Button
             title="Report Found Item"
             onPress={() => router.push('/lost-found/report?type=found')}
-            style={[styles.actionButton, { backgroundColor: Colors.success }]}
+            style={StyleSheet.flatten([styles.actionButton, { backgroundColor: Colors.success }])}
             icon={<Plus size={20} color={Colors.text.light} />}
           />
         </View>
 
+        {/* Items List */}
         <View style={styles.itemsList}>
           <Text style={styles.sectionTitle}>
             {filteredItems.length} Items Found
           </Text>
           
-          {filteredItems.length === 0 ? (
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+          ) : filteredItems.length === 0 ? (
             <View style={styles.emptyState}>
               <Package size={48} color={Colors.text.muted} />
               <Text style={styles.emptyStateTitle}>No items found</Text>
@@ -251,8 +305,12 @@ export default function LostFoundScreen() {
           )}
         </View>
 
+        {/* Contact Info */}
         <View style={styles.contactInfo}>
           <Text style={styles.contactTitle}>Need Help?</Text>
+          <Text style={styles.contactSubtitle}>
+            Contact the Dhaka Metro Rail Lost & Found department for assistance.
+          </Text>
           <View style={styles.contactItem}>
             <Phone size={16} color={Colors.primary} />
             <Text style={styles.contactText}>Hotline: 16374</Text>
@@ -273,21 +331,40 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
     color: Colors.text.primary,
-    marginBottom: 8,
+  },
+  placeholder: {
+    width: 32,
+  },
+  content: {
+    flex: 1,
+  },
+  introSection: {
+    padding: 20,
+    paddingBottom: 16,
   },
   subtitle: {
     fontSize: 16,
     color: Colors.text.secondary,
     lineHeight: 22,
+    textAlign: 'center',
   },
   searchContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginBottom: 16,
   },
   searchBar: {
@@ -311,7 +388,7 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   filterChip: {
     paddingHorizontal: 16,
@@ -339,7 +416,7 @@ const styles = StyleSheet.create({
   },
   categoryRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   categoryChip: {
     paddingHorizontal: 12,
@@ -364,7 +441,7 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginBottom: 24,
     gap: 12,
   },
@@ -372,13 +449,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemsList: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: Colors.text.primary,
     marginBottom: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
   },
   itemCard: {
     backgroundColor: Colors.card,
@@ -456,7 +541,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   contactInfo: {
-    margin: 16,
+    margin: 20,
     padding: 16,
     backgroundColor: Colors.surface,
     borderRadius: 12,
@@ -467,6 +552,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  contactSubtitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
     marginBottom: 12,
   },
   contactItem: {

@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Package, MapPin, Calendar, Phone, Mail, User, FileText } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
+import { LostFoundCategory, LostFoundReport } from '@/types';
 
-const categories = ['Phone', 'Wallet', 'Bag', 'Jewelry', 'Documents', 'Electronics', 'Clothing', 'Other'];
+const categories: LostFoundCategory[] = [
+  'Electronics',
+  'Bags & Luggage',
+  'Clothing',
+  'Documents',
+  'Jewelry',
+  'Keys',
+  'Wallet',
+  'Phone',
+  'Other'
+];
 
 const stations = [
   'Uttara North', 'Uttara Center', 'Uttara South', 'Pallabi', 'Mirpur 11', 'Mirpur 10',
@@ -15,19 +26,19 @@ const stations = [
 ];
 
 export default function ReportLostFoundScreen() {
-  const router = useRouter();
   const { type } = useLocalSearchParams<{ type?: string }>();
   const isFoundItem = type === 'found';
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LostFoundReport>({
     title: '',
     description: '',
-    category: '',
+    category: 'Other',
     location: '',
     date: new Date().toISOString().split('T')[0],
     contactName: '',
     contactPhone: '',
     contactEmail: '',
+    type: isFoundItem ? 'found' : 'lost',
   });
 
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -52,25 +63,27 @@ export default function ReportLostFoundScreen() {
     );
   };
 
-  const updateFormData = (field: string, value: string) => {
+  const updateFormData = <K extends keyof LostFoundReport>(field: K, value: LostFoundReport[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Stack.Screen
-        options={{
-          headerTitle: isFoundItem ? 'Report Found Item' : 'Report Lost Item',
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()}>
-              <ArrowLeft size={24} color={Colors.primary} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color={Colors.text.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          Report {isFoundItem ? 'Found' : 'Lost'} Item
+        </Text>
+        <View style={styles.placeholder} />
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
+        <View style={styles.introHeader}>
           <View style={styles.iconContainer}>
             <Package size={32} color={isFoundItem ? Colors.success : Colors.error} />
           </View>
@@ -260,10 +273,10 @@ export default function ReportLostFoundScreen() {
           <Button
             title={`Submit ${isFoundItem ? 'Found' : 'Lost'} Item Report`}
             onPress={handleSubmit}
-            style={[
+            style={StyleSheet.flatten([
               styles.submitButton,
               { backgroundColor: isFoundItem ? Colors.success : Colors.error }
-            ]}
+            ])}
           />
         </View>
       </ScrollView>
@@ -277,7 +290,27 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  placeholder: {
+    width: 32,
+  },
+  introHeader: {
+    padding: 20,
     alignItems: 'center',
   },
   iconContainer: {
@@ -288,6 +321,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   title: {
     fontSize: 24,
@@ -303,7 +338,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   form: {
-    padding: 16,
+    padding: 20,
   },
   formGroup: {
     marginBottom: 20,
