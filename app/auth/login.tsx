@@ -201,8 +201,13 @@ export default function LoginScreen() {
           <ArrowLeft size={24} color={Colors.primary} />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.languageButton}>
-          <Text style={styles.languageText}>English</Text>
+        <TouchableOpacity 
+          style={styles.qrButton}
+          onPress={biometricAvailable ? (biometricEnabled ? handleBiometricLogin : handleSetupFaceID) : () => {
+            Alert.alert('Face ID Not Available', 'Face ID authentication is not available on this device.');
+          }}
+        >
+          <Text style={styles.qrText}>🔒</Text>
         </TouchableOpacity>
       </View>
 
@@ -347,6 +352,26 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 14,
     fontWeight: '500',
+  },
+  qrButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  qrText: {
+    fontSize: 20,
+    color: 'white',
   },
   logoContainer: {
     alignItems: 'center',
