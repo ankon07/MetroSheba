@@ -7,13 +7,18 @@ import { ArrowLeft, Share2, Download, Train, Clock, MapPin, QrCode } from "lucid
 import Button from "@/components/Button";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 import { mockTrips } from "@/mocks/trips";
+import { useUserStore } from "@/store/userStore";
 import Colors from "@/constants/colors";
 
 export default function TicketDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { trips } = useUserStore();
   
-  const trip = mockTrips.find((t) => t.id === id);
+  // Find the trip in user trips first, then fall back to mock data
+  const userTrip = trips.find((t) => t.id === id);
+  const mockTrip = mockTrips.find((t) => t.id === id);
+  const trip = userTrip || mockTrip;
   
   if (!trip || !trip.bookingRef) {
     return (

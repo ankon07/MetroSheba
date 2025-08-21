@@ -1,71 +1,104 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CreditCard, Check } from "lucide-react-native";
+import { CreditCard, Check, Smartphone, Wallet, ArrowLeft } from "lucide-react-native";
 import Button from "@/components/Button";
 import BookingSteps from "@/components/BookingSteps";
-import PaymentMethodCard from "@/components/PaymentMethodCard";
+import AnimatedCard from "@/components/AnimatedCard";
 import { mockTrips } from "@/mocks/trips";
 import { useUserStore } from "@/store/userStore";
 import Colors from "@/constants/colors";
 
+type PaymentMethod = "bkash" | "card" | "nagad";
+
 export default function PaymentScreen() {
   const router = useRouter();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
-  const { paymentMethods, addTrip } = useUserStore();
+  const { addTrip } = useUserStore();
   
   // Find the trip in our mock data
   const trip = mockTrips.find((t) => t.id === tripId);
   
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
-    paymentMethods.length > 0 ? paymentMethods[0].id : ""
-  );
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("bkash");
+  const [isProcessing, setIsProcessing] = useState(false);
   
-  const [newCard, setNewCard] = useState({
+  // Card form state
+  const [cardForm, setCardForm] = useState({
     cardholderName: "",
     cardNumber: "",
     expiryDate: "",
     cvv: "",
   });
   
-  const [showNewCardForm, setShowNewCardForm] = useState(paymentMethods.length === 0);
+  // Mobile payment form state
+  const [mobileForm, setMobileForm] = useState({
+    phoneNumber: "",
+    pin: "",
+  });
   
-  const handleInputChange = (field: string, value: string) => {
-    setNewCard((prev) => ({ ...prev, [field]: value }));
-  };
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   
-  const handlePaymentMethodSelect = (id: string) => {
-    setSelectedPaymentMethod(id);
-    setShowNewCardForm(false);
-  };
-  
-  const handleAddNewCard = () => {
-    setSelectedPaymentMethod("");
-    setShowNewCardForm(true);
-  };
-  
-  const handlePaymentMethodDelete = (id: string) => {
-    // In a real app, this would remove the payment method
-    console.log("Delete payment method:", id);
-  };
-  
-  const handlePayment = () => {
-    // In a real app, this would process the payment
-    // For demo purposes, we'll just add the trip to the user's trips
-    if (trip) {
-      const bookedTrip = {
-        ...trip,
-        status: "upcoming" as const,
-        bookingRef: `E${Math.floor(Math.random() * 10000)}/${Math.floor(Math.random() * 10000)}`,
-      };
-      addTrip(bookedTrip);
+  const handleCardInputChange = (field: string, value: string) => {
+    if (field === "cardNumber") {
+      // Format card number with spaces
+      const formatted = value.replace(/\s/g, "").replace(/(.{4})/g, "$1 ").trim();
+      setCardForm((prev) => ({ ...prev, [field]: formatted }));
+    } else if (field === "expiryDate") {
+      // Format expiry date as MM/YY
+      const formatted = value.replace(/\D/g, "").replace(/(\d{2})(\d{2})/, "$1/$2");
+      setCardForm((prev) => ({ ...prev, [field]: formatted }));
+    } else {
+      setCardForm((prev) => ({ ...prev, [field]: value }));
     }
+  };
+  
+  const handleMobileInputChange = (field: string, value: string) => {
+    if (field === "phoneNumber") {
+      // Format phone number
+      const formatted = value.replace(/\D/g, "");
+      setMobileForm((prev) => ({ ...prev, [field]: formatted }));
+    } else {
+      setMobileForm((prev) => ({ ...prev, [field]: value }));
+    }
+  };
+  
+  const validateForm = () => {
+    if (!agreedToTerms) return false;
     
-    router.push({
-      pathname: "/booking/confirmation",
-      params: { tripId }
-    });
+    if (selectedPaymentMethod === "card") {
+      return cardForm.cardholderName && 
+             cardForm.cardNumber.replace(/\s/g, "").length >= 16 && 
+             cardForm.expiryDate.length === 5 && 
+             cardForm.cvv.length >= 3;
+    } else {
+      return mobileForm.phoneNumber.length >= 11 && mobileForm.pin.length >= 4;
+    }
+  };
+  
+  const handlePayment = async () => {
+    if (!validateForm()) return;
+    
+    setIsProcessing(true);
+    
+    // Simulate payment processing
+    setTimeout(() => {
+      if (trip) {
+        const bookedTrip = {
+          ...trip,
+          status: "upcoming" as const,
+          bookingRef: `MTR${Math.floor(Math.random() * 100000)}`,
+          paymentMethod: selectedPaymentMethod,
+        };
+        addTrip(bookedTrip);
+      }
+      
+      setIsProcessing(false);
+      router.push({
+        pathname: "/booking/confirmation",
+        params: { tripId, paymentMethod: selectedPaymentMethod }
+      });
+    }, 2000);
   };
   
   if (!trip) {
@@ -83,158 +116,247 @@ export default function PaymentScreen() {
     );
   }
 
-  return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Payment Details</Text>
+  const renderPaymentMethodCard = (method: PaymentMethod, title: string, icon: React.ReactNode, description: string) => (
+    <TouchableOpacity
+      style={[
+        styles.paymentMethodCard,
+        selectedPaymentMethod === method && styles.selectedPaymentMethodCard
+      ]}
+      onPress={() => setSelectedPaymentMethod(method)}
+    >
+      <View style={styles.paymentMethodHeader}>
+        <View style={styles.paymentMethodIcon}>
+          {icon}
+        </View>
+        <View style={styles.paymentMethodInfo}>
+          <Text style={styles.paymentMethodTitle}>{title}</Text>
+          <Text style={styles.paymentMethodDescription}>{description}</Text>
+        </View>
+        <View style={[
+          styles.radioButton,
+          selectedPaymentMethod === method && styles.selectedRadioButton
+        ]}>
+          {selectedPaymentMethod === method && <Check size={16} color="#fff" />}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderCardForm = () => (
+    <AnimatedCard delay={400}>
+      <View style={styles.formContainer}>
+        <Text style={styles.formTitle}>Card Details</Text>
+        
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Cardholder Name</Text>
+          <TextInput
+            style={styles.input}
+            value={cardForm.cardholderName}
+            onChangeText={(text) => handleCardInputChange("cardholderName", text)}
+            placeholder="Enter cardholder name"
+            placeholderTextColor={Colors.text.secondary}
+          />
         </View>
         
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Card Number</Text>
+          <TextInput
+            style={styles.input}
+            value={cardForm.cardNumber}
+            onChangeText={(text) => handleCardInputChange("cardNumber", text)}
+            placeholder="1234 5678 9012 3456"
+            placeholderTextColor={Colors.text.secondary}
+            keyboardType="number-pad"
+            maxLength={19}
+          />
+        </View>
+        
+        <View style={styles.inputRow}>
+          <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
+            <Text style={styles.inputLabel}>Expiry Date</Text>
+            <TextInput
+              style={styles.input}
+              value={cardForm.expiryDate}
+              onChangeText={(text) => handleCardInputChange("expiryDate", text)}
+              placeholder="MM/YY"
+              placeholderTextColor={Colors.text.secondary}
+              keyboardType="number-pad"
+              maxLength={5}
+            />
+          </View>
+          
+          <View style={[styles.inputContainer, { flex: 1 }]}>
+            <Text style={styles.inputLabel}>CVV</Text>
+            <TextInput
+              style={styles.input}
+              value={cardForm.cvv}
+              onChangeText={(text) => handleCardInputChange("cvv", text)}
+              placeholder="123"
+              placeholderTextColor={Colors.text.secondary}
+              keyboardType="number-pad"
+              maxLength={4}
+              secureTextEntry
+            />
+          </View>
+        </View>
+      </View>
+    </AnimatedCard>
+  );
+
+  const renderMobileForm = () => (
+    <AnimatedCard delay={400}>
+      <View style={styles.formContainer}>
+        <Text style={styles.formTitle}>
+          {selectedPaymentMethod === "bkash" ? "bKash" : "Nagad"} Details
+        </Text>
+        
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Mobile Number</Text>
+          <TextInput
+            style={styles.input}
+            value={mobileForm.phoneNumber}
+            onChangeText={(text) => handleMobileInputChange("phoneNumber", text)}
+            placeholder="01XXXXXXXXX"
+            placeholderTextColor={Colors.text.secondary}
+            keyboardType="phone-pad"
+            maxLength={11}
+          />
+        </View>
+        
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>PIN</Text>
+          <TextInput
+            style={styles.input}
+            value={mobileForm.pin}
+            onChangeText={(text) => handleMobileInputChange("pin", text)}
+            placeholder="Enter your PIN"
+            placeholderTextColor={Colors.text.secondary}
+            keyboardType="number-pad"
+            maxLength={5}
+            secureTextEntry
+          />
+        </View>
+        
+        <View style={styles.infoBox}>
+          <Text style={styles.infoText}>
+            You will receive a push notification to confirm this payment on your {selectedPaymentMethod === "bkash" ? "bKash" : "Nagad"} app.
+          </Text>
+        </View>
+      </View>
+    </AnimatedCard>
+  );
+
+  return (
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color={Colors.text.primary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Payment</Text>
+        <View style={styles.placeholder} />
+      </View>
+      
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <BookingSteps
           currentStep={2}
           steps={["Details", "Booking", "Payment", "Confirmation"]}
         />
         
-        <View style={styles.priceCard}>
-          <Text style={styles.priceValue}>${trip.price.toFixed(2)}</Text>
-          
-          <View style={styles.tripDetails}>
-            <Text style={styles.tripRoute}>
-              {trip.from.city} — {trip.to.city} • {trip.class}
-            </Text>
-            <Text style={styles.tripDate}>
-              {new Date(trip.departureDate).toLocaleDateString()} • {trip.departureTime} - {trip.arrivalTime} • 1 Adult
-            </Text>
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-          
-          {paymentMethods.length > 0 && (
-            <View style={styles.savedPaymentMethods}>
-              {paymentMethods.map((method) => (
-                <PaymentMethodCard
-                  key={method.id}
-                  method={method}
-                  onSelect={() => handlePaymentMethodSelect(method.id)}
-                  onDelete={() => handlePaymentMethodDelete(method.id)}
-                  isSelected={selectedPaymentMethod === method.id}
-                />
-              ))}
-              
-              <TouchableOpacity
-                style={styles.addNewCardButton}
-                onPress={handleAddNewCard}
-              >
-                <CreditCard size={20} color={Colors.primary} />
-                <Text style={styles.addNewCardText}>Add New Card</Text>
-              </TouchableOpacity>
+        <AnimatedCard delay={0}>
+          <View style={styles.priceCard}>
+            <Text style={styles.priceValue}>৳{trip.price.toFixed(2)}</Text>
+            
+            <View style={styles.tripDetails}>
+              <Text style={styles.tripRoute}>
+                {trip.from.city} → {trip.to.city}
+              </Text>
+              <Text style={styles.tripDate}>
+                {new Date(trip.departureDate).toLocaleDateString()} • {trip.departureTime} - {trip.arrivalTime}
+              </Text>
             </View>
-          )}
-          
-          {showNewCardForm && (
-            <View style={styles.newCardForm}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Cardholder Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newCard.cardholderName}
-                  onChangeText={(text) => handleInputChange("cardholderName", text)}
-                  placeholder="Enter cardholder name"
-                />
-              </View>
-              
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Card Number</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newCard.cardNumber}
-                  onChangeText={(text) => handleInputChange("cardNumber", text)}
-                  placeholder="1234 5678 9012 3456"
-                  keyboardType="number-pad"
-                  maxLength={19}
-                />
-              </View>
-              
-              <View style={styles.inputRow}>
-                <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>Expiry Date</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={newCard.expiryDate}
-                    onChangeText={(text) => handleInputChange("expiryDate", text)}
-                    placeholder="MM/YY"
-                    keyboardType="number-pad"
-                    maxLength={5}
-                  />
-                </View>
-                
-                <View style={[styles.inputContainer, { flex: 1 }]}>
-                  <Text style={styles.inputLabel}>CVV</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={newCard.cvv}
-                    onChangeText={(text) => handleInputChange("cvv", text)}
-                    placeholder="123"
-                    keyboardType="number-pad"
-                    maxLength={4}
-                    secureTextEntry
-                  />
-                </View>
-              </View>
-              
-              <View style={styles.saveCardContainer}>
-                <View style={styles.checkboxContainer}>
-                  <View style={styles.checkbox}>
-                    <Check size={16} color="#fff" />
-                  </View>
-                  <Text style={styles.saveCardText}>Save card for future payments</Text>
-                </View>
-              </View>
-            </View>
-          )}
-        </View>
+          </View>
+        </AnimatedCard>
         
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Price Details</Text>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Base Fare</Text>
-            <Text style={styles.priceAmount}>${(trip.price * 0.85).toFixed(2)}</Text>
+        <AnimatedCard delay={200}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Select Payment Method</Text>
+            
+            {renderPaymentMethodCard(
+              "bkash",
+              "bKash",
+              <View style={[styles.methodIcon, { backgroundColor: "#E2136E" }]}>
+                <Smartphone size={24} color="#fff" />
+              </View>,
+              "Pay with your bKash mobile wallet"
+            )}
+            
+            {renderPaymentMethodCard(
+              "card",
+              "Credit/Debit Card",
+              <View style={[styles.methodIcon, { backgroundColor: "#1E40AF" }]}>
+                <CreditCard size={24} color="#fff" />
+              </View>,
+              "Pay with Visa, Mastercard, or local cards"
+            )}
+            
+            {renderPaymentMethodCard(
+              "nagad",
+              "Nagad",
+              <View style={[styles.methodIcon, { backgroundColor: "#FF6B35" }]}>
+                <Wallet size={24} color="#fff" />
+              </View>,
+              "Pay with your Nagad mobile wallet"
+            )}
           </View>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Taxes & Fees</Text>
-            <Text style={styles.priceAmount}>${(trip.price * 0.15).toFixed(2)}</Text>
-          </View>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Booking Fee</Text>
-            <Text style={styles.priceAmount}>$0.00</Text>
-          </View>
-          
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>${trip.price.toFixed(2)}</Text>
-          </View>
-        </View>
+        </AnimatedCard>
         
-        <View style={styles.termsContainer}>
-          <View style={styles.checkboxContainer}>
-            <View style={styles.checkbox}>
-              <Check size={16} color="#fff" />
+        {selectedPaymentMethod === "card" ? renderCardForm() : renderMobileForm()}
+        
+        <AnimatedCard delay={600}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Price Breakdown</Text>
+            
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Base Fare</Text>
+              <Text style={styles.priceAmount}>৳{(trip.price * 0.9).toFixed(2)}</Text>
             </View>
-            <Text style={styles.termsText}>
-              I agree to the Terms & Conditions and Privacy Policy
-            </Text>
+            
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Service Charge</Text>
+              <Text style={styles.priceAmount}>৳{(trip.price * 0.1).toFixed(2)}</Text>
+            </View>
+            
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={styles.totalAmount}>৳{trip.price.toFixed(2)}</Text>
+            </View>
           </View>
-        </View>
+        </AnimatedCard>
+        
+        <AnimatedCard delay={800}>
+          <View style={styles.termsContainer}>
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setAgreedToTerms(!agreedToTerms)}
+            >
+              <View style={[styles.checkbox, agreedToTerms && styles.checkedCheckbox]}>
+                {agreedToTerms && <Check size={16} color="#fff" />}
+              </View>
+              <Text style={styles.termsText}>
+                I agree to the Terms & Conditions and Privacy Policy
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </AnimatedCard>
         
         <Button
-          title="Pay Now"
+          title={isProcessing ? "Processing..." : `Pay ৳${trip.price.toFixed(2)}`}
           onPress={handlePayment}
-          style={styles.payButton}
+          disabled={!validateForm() || isProcessing}
+          style={StyleSheet.flatten([
+            styles.payButton,
+            (!validateForm() || isProcessing) && styles.disabledButton
+          ])}
         />
       </ScrollView>
     </SafeAreaView>
@@ -247,19 +369,34 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  backButton: {
+    padding: 8,
   },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "700",
     color: Colors.text.primary,
   },
-  priceCard: {
-    margin: 16,
+  placeholder: {
+    width: 40,
+  },
+  scrollContent: {
     padding: 16,
+  },
+  priceCard: {
     backgroundColor: Colors.primary,
-    borderRadius: 8,
+    borderRadius: 16,
+    padding: 20,
     alignItems: "center",
+    marginBottom: 16,
   },
   priceValue: {
     fontSize: 32,
@@ -271,7 +408,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tripRoute: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
     color: "#fff",
     marginBottom: 4,
@@ -281,15 +418,12 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.8)",
   },
   section: {
-    margin: 16,
+    backgroundColor: Colors.card,
+    borderRadius: 16,
     padding: 16,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   sectionTitle: {
     fontSize: 18,
@@ -297,66 +431,103 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     marginBottom: 16,
   },
-  savedPaymentMethods: {
-    marginBottom: 16,
+  paymentMethodCard: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
   },
-  addNewCardButton: {
+  selectedPaymentMethodCard: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + "10",
+  },
+  paymentMethodHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: 8,
-    borderStyle: "dashed",
   },
-  addNewCardText: {
+  paymentMethodIcon: {
+    marginRight: 12,
+  },
+  methodIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  paymentMethodInfo: {
+    flex: 1,
+  },
+  paymentMethodTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.primary,
-    marginLeft: 8,
+    color: Colors.text.primary,
+    marginBottom: 2,
   },
-  newCardForm: {
-    marginTop: 16,
+  paymentMethodDescription: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  radioButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectedRadioButton: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  formContainer: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  formTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: Colors.text.primary,
+    marginBottom: 16,
   },
   inputContainer: {
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 4,
+    fontWeight: "500",
+    color: Colors.text.primary,
+    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
+    color: Colors.text.primary,
+    backgroundColor: Colors.background,
   },
   inputRow: {
     flexDirection: "row",
   },
-  saveCardContainer: {
+  infoBox: {
+    backgroundColor: Colors.primary + "15",
+    borderRadius: 8,
+    padding: 12,
     marginTop: 8,
   },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
-  saveCardText: {
+  infoText: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    color: Colors.primary,
+    textAlign: "center",
   },
   priceRow: {
     flexDirection: "row",
@@ -369,6 +540,7 @@ const styles = StyleSheet.create({
   },
   priceAmount: {
     fontSize: 14,
+    fontWeight: "500",
     color: Colors.text.primary,
   },
   totalRow: {
@@ -390,7 +562,30 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   termsContainer: {
-    margin: 16,
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  checkedCheckbox: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   termsText: {
     fontSize: 14,
@@ -398,8 +593,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   payButton: {
-    margin: 16,
     marginBottom: 32,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   errorContainer: {
     flex: 1,
